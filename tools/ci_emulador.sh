@@ -9,8 +9,17 @@ adb wait-for-device
 adb shell getprop ro.build.version.release
 adb install -r -g "$apk" || exit 1
 adb logcat -c || true
+# Espera a que el sistema del emulador esté estable (en TV, SystemUI a veces se reinicia al arrancar).
+sleep 20
 adb shell am start -W -n es.cazique.iptvgestor/.ui.MainActivity
 sleep 25
+if ! adb shell pidof es.cazique.iptvgestor >/dev/null; then
+  echo "::warning::La app no estaba en marcha a los 25 s; se reintenta una vez (posible reinicio del sistema del emulador)"
+  adb logcat -d > "salida-emulador/logcat-primer-intento-$nombre.txt" || true
+  sleep 20
+  adb shell am start -W -n es.cazique.iptvgestor/.ui.MainActivity
+  sleep 25
+fi
 adb logcat -d -b crash > "salida-emulador/fallos-$nombre.txt" || true
 adb logcat -d > "salida-emulador/logcat-$nombre.txt" || true
 adb exec-out screencap -p > "salida-emulador/captura-$nombre.png" || true

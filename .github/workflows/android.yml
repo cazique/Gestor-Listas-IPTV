@@ -63,9 +63,11 @@ jobs:
           - nombre: movil
             api: 35
             target: google_apis
+            perfil: ''
           - nombre: tv
             api: auto
             target: auto
+            perfil: tv_1080p
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -111,6 +113,7 @@ jobs:
           api-level: ${{ steps.imagen.outputs.api }}
           target: ${{ steps.imagen.outputs.target }}
           arch: ${{ steps.imagen.outputs.arch }}
+          profile: ${{ matrix.perfil }}
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: tools/ci_emulador.sh "$RUNNER_TEMP/app-prueba.apk" ${{ matrix.nombre }}
@@ -208,7 +211,8 @@ jobs:
           extra=()
           if [ "$PRELIMINAR" = "true" ]; then extra+=(--prerelease); else extra+=(--latest); fi
           capturas=()
-          for f in capturas/captura-*.png; do [ -s "$f" ] && capturas+=("$f"); done
+          # Solo capturas con contenido (una pantalla en negro ocupa muy poco).
+          for f in capturas/captura-*.png; do [ "$(stat -c %s "$f" 2>/dev/null || echo 0)" -gt 15000 ] && capturas+=("$f"); done
           gh release create "$etiqueta" \
             salida/app-release.apk salida/update.json salida/SHA256SUMS "${capturas[@]}" \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
