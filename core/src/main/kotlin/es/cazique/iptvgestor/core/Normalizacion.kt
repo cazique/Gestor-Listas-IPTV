@@ -3,13 +3,20 @@ package es.cazique.iptvgestor.core
 import java.text.Normalizer
 import java.util.regex.Pattern
 
+/** Android (ART/Dalvik) usa el motor de expresiones regulares ICU en lugar del de la JVM. */
+internal val EN_ANDROID: Boolean =
+    System.getProperty("java.vm.name")?.contains("Dalvik", ignoreCase = true) == true ||
+        System.getProperty("java.vendor")?.contains("Android", ignoreCase = true) == true
+
 /**
  * Expresión regular con clases de caracteres Unicode (`\w`, `\b`, `\d`, `\s`), como en Python 3.
- * Se usa el indicador UNICODE_CHARACTER_CLASS y no el modificador en línea `(?U)`, que el motor ICU
- * de Android no admite (PatternSyntaxException en Android 16). En Android el indicador se ignora
- * porque ICU ya trabaja siempre en Unicode.
+ * - En Android, ICU ya trabaja siempre en Unicode y **no admite** ni el modificador `(?U)`
+ *   (PatternSyntaxException) ni el indicador UNICODE_CHARACTER_CLASS (IllegalArgumentException):
+ *   se compila tal cual.
+ * - En la JVM (pruebas), se activa UNICODE_CHARACTER_CLASS para tener el mismo comportamiento.
  */
-internal fun reU(patron: String): Regex = Pattern.compile(patron, Pattern.UNICODE_CHARACTER_CLASS).toRegex()
+internal fun reU(patron: String): Regex =
+    if (EN_ANDROID) Regex(patron) else Pattern.compile(patron, Pattern.UNICODE_CHARACTER_CLASS).toRegex()
 
 /**
  * Reglas de la sección 4.2 y 4.3 de SPEC.md, portadas de `tools/capas_epg.py`.
