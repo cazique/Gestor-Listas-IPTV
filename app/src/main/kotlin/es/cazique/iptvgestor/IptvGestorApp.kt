@@ -12,6 +12,7 @@ import es.cazique.iptvgestor.datos.Exportador
 import es.cazique.iptvgestor.datos.Repositorio
 import es.cazique.iptvgestor.datos.TrabajoSincronizacion
 import es.cazique.iptvgestor.datos.bd.BaseDatos
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,10 +35,14 @@ class IptvGestorApp : Application(), Configuration.Provider {
         private set
     lateinit var vod: es.cazique.iptvgestor.datos.RepositorioVod
         private set
-    val alcance = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    /** Las tareas de fondo nunca cierran la app: su error se guarda en el registro de fallos. */
+    val alcance = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, e ->
+        RegistroFallos.guardar(this, e, "tarea de fondo")
+    })
 
     override fun onCreate() {
         super.onCreate()
+        RegistroFallos.instalar(this)
         ajustes = Ajustes(this)
         // Sin interceptor de registro: nunca se escriben URL ni cuerpos en el log (sección 9).
         http = OkHttpClient.Builder()
@@ -48,8 +53,8 @@ class IptvGestorApp : Application(), Configuration.Provider {
         repositorio = Repositorio(this, http, ajustes, Credenciales(this), BaseDatos.crear(this))
         exportador = Exportador(this, repositorio)
         vod = es.cazique.iptvgestor.datos.RepositorioVod(this, repositorio, http)
-        crearCanalNotificaciones()
-        TrabajoActualizacion.programar(this)
+        runCatching { crearCanalNotificaciones() }
+        runCatching { TrabajoActualizacion.programar(this) }.onFailure { RegistroFallos.guardar(this, it, "programar actualizaciones") }
         alcance.launch {
             TrabajoSincronizacion.programar(
                 this@IptvGestorApp,

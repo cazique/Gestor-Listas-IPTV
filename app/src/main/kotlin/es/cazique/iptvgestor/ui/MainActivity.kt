@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import es.cazique.iptvgestor.IptvGestorApp
+import es.cazique.iptvgestor.RegistroFallos
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -31,9 +32,11 @@ class MainActivity : ComponentActivity() {
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) pedirNotificaciones.launch(Manifest.permission.POST_NOTIFICATIONS)
         val buscarAhora = intent?.getBooleanExtra(EXTRA_BUSCAR, false) == true
+        val falloAnterior = RegistroFallos.leerYBorrar(this)
         setContent {
             TemaApp(tv) {
                 AppRaiz(app, tv, buscarAhora, abrirIntent = { runCatching { startActivity(it) } })
+                falloAnterior?.let { DialogoFallo(it) { t -> runCatching { startActivity(t) } } }
             }
         }
     }
