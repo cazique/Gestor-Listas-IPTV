@@ -69,8 +69,13 @@ private fun PantallaListaInterna() {
     }
 
     Column(Modifier.fillMaxSize().padding(horizontal = if (tv) 32.dp else 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Cabecera("Vista previa (${filtrada.size} de ${lista.size})", false) {}
-        OutlinedTextField(q, { q = it }, label = { Text("Buscar canal o ID de guía") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("buscar_lista"))
+        Cabecera("Vista previa", false, "${filtrada.size} de ${lista.size} canales, en el orden en que se exportarán") {}
+        OutlinedTextField(
+            q, { q = it }, label = { Text("Buscar canal o ID de guía") }, singleLine = true,
+            leadingIcon = { androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(es.cazique.iptvgestor.R.drawable.ic_buscar), null) },
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth().testTag("buscar_lista"),
+        )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             FiltroLista.entries.forEach { f -> FilterChip(selected = filtro == f, onClick = { filtro = f }, label = { Text(f.texto) }) }
             FilterChip(selected = grupo != null, onClick = { grupo = if (grupo == null) grupos.firstOrNull() else null }, label = { Text(grupo ?: "Todos los grupos") })
@@ -83,26 +88,38 @@ private fun PantallaListaInterna() {
         if (bloquear && todas.size != lista.size) {
             FilaFoco(onClick = { pidiendoPin = true }) { Text("🔒 ${todas.size - lista.size} canales para adultos ocultos. Toca para desbloquear con el PIN.") }
         }
-        if (lista.isEmpty()) Text("Todavía no hay datos. Sincroniza desde Resumen o importa archivos en Cuenta.")
+        if (lista.isEmpty()) EstadoVacio(es.cazique.iptvgestor.R.drawable.ic_lista, "La lista está vacía",
+            "Sincroniza desde Resumen o importa los archivos en Ajustes → Cuenta.")
+        else if (filtrada.isEmpty()) EstadoVacio(es.cazique.iptvgestor.R.drawable.ic_buscar, "Sin resultados", "Prueba con otro texto o quita los filtros.")
         LazyColumn(Modifier.fillMaxSize().testTag("lista")) {
             var anterior: String? = null
             val filas = ArrayList<Pair<String?, EntradaLista>>()
             for (e in filtrada) { filas.add((if (e.grupoSalida != anterior) e.grupoSalida else null) to e); anterior = e.grupoSalida }
             items(filas, key = { it.second.grupoSalida + "|" + it.second.variante.stream.streamId }) { (cabecera, e) ->
                 Column {
-                    cabecera?.let { Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)) }
+                    cabecera?.let {
+                        androidx.compose.material3.Surface(
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            shape = MaterialTheme.shapes.small,
+                            modifier = Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 4.dp),
+                        ) {
+                            Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
+                        }
+                    }
                     FilaFoco(onClick = { nav.ir(Destino.Ficha(e.canal.ambito, e.canal.clave)) }) {
-                        IconoCanal(e.canal.icono)
+                        IconoCanal(e.canal.icono, 44)
                         Column(Modifier.weight(1f)) {
-                            Text(e.nombreMostrado, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(e.nombreMostrado, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                (if (e.canal.tvgId.isEmpty()) "⚠ Sin guía" else "Guía: ${e.canal.tvgId}") +
-                                    (e.capa?.let { " · capa $it" } ?: "") + (if (e.canal.manual) " · ✎ manual" else ""),
+                                if (e.canal.tvgId.isEmpty()) "Sin guía" else e.canal.tvgId,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (e.canal.tvgId.isEmpty()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
+                                maxLines = 1, overflow = TextOverflow.Ellipsis,
                             )
                         }
+                        if (e.canal.manual) Etiqueta("manual", MaterialTheme.colorScheme.secondary)
+                        e.capa?.let { Etiqueta("capa $it") }
                     }
                 }
             }

@@ -68,8 +68,7 @@ fun PantallaAjustes(abrirIntent: (Intent) -> Unit) {
 
     PantallaBase("Ajustes") {
         mensaje?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }
-        Tarjeta {
-            Text("Cuenta y conexión", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Cuenta y conexión") {
             FilaFoco(onClick = { nav.ir(Destino.Cuenta) }) { Text("Servidor, usuario y contraseña →") }
             val formato = prefs?.get(Ajustes.K.FORMATO) ?: "ts"
             FilaFoco(onClick = { guardar(Ajustes.K.FORMATO, if (formato == "ts") "m3u8" else "ts") }) {
@@ -79,8 +78,7 @@ fun PantallaAjustes(abrirIntent: (Intent) -> Unit) {
                 Text("User-Agent", Modifier.weight(1f)); Text(prefs?.get(Ajustes.K.USER_AGENT) ?: Repositorio.UA_PREDETERMINADO)
             }
         }
-        Tarjeta {
-            Text("Filtros y paquetes", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Filtros y paquetes") {
             FilaFoco(onClick = { dialogo = DialogoAjustes.PREFIJOS }) { Text("Grupos conservados (prefijos)", Modifier.weight(1f)); Text(config.prefijosGrupo.joinToString()) }
             FilaFoco(onClick = { dialogo = DialogoAjustes.EXTRAS }) { Text("Grupos extra", Modifier.weight(1f)); Text(config.extras.joinToString()) }
             FilaInterruptor("PPV de todos los países", config.ppvTodos) { guardarConfig(config.copy(ppvTodos = it)) }
@@ -93,15 +91,13 @@ fun PantallaAjustes(abrirIntent: (Intent) -> Unit) {
             FilaInterruptor("Variantes BK después, a igual calidad", config.respaldoAlFinal) { guardarConfig(config.copy(respaldoAlFinal = it)) }
             FilaInterruptor("Capas también en el resto de grupos", config.capasEnRestoGrupos) { guardarConfig(config.copy(capasEnRestoGrupos = it)) }
         }
-        Tarjeta {
-            Text("Guía", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Guía") {
             FilaFoco(onClick = { dialogo = DialogoAjustes.VARIANTE_EPG }) {
                 Text("Variante de dobleM", Modifier.weight(1f)); Text(prefs?.get(Ajustes.K.VARIANTE_EPG) ?: "guiatv_sincolor")
             }
             Text("La guía y los iconos se descargan de dobleM; no van dentro de la app.", style = MaterialTheme.typography.bodySmall)
         }
-        Tarjeta {
-            Text("Sincronización", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Sincronización") {
             val auto = prefs?.get(Ajustes.K.SINCRONIZAR_AUTO) ?: true
             val horas = prefs?.get(Ajustes.K.HORAS_SINCRONIZACION) ?: 6
             FilaInterruptor("Sincronizar automáticamente", auto) {
@@ -110,23 +106,20 @@ fun PantallaAjustes(abrirIntent: (Intent) -> Unit) {
             FilaFoco(onClick = { dialogo = DialogoAjustes.HORAS }) { Text("Cada", Modifier.weight(1f)); Text("$horas horas") }
             FilaFoco(onClick = { nav.ir(Destino.Informes) }) { Text("Informes de cambios →") }
         }
-        Tarjeta {
-            Text("Lista exportada", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Lista exportada") {
             FilaInterruptor("Numerar canales (tvg-chno)", prefs?.get(Ajustes.K.NUMERAR) ?: false) { guardar(Ajustes.K.NUMERAR, it) }
             FilaInterruptor("Añadir #EXTVLCOPT con el User-Agent", prefs?.get(Ajustes.K.EXTVLCOPT) ?: false) { guardar(Ajustes.K.EXTVLCOPT, it) }
             FilaInterruptor("Incluir canales para adultos", prefs?.get(Ajustes.K.EXPORTAR_ADULTOS) ?: true) { guardar(Ajustes.K.EXPORTAR_ADULTOS, it) }
             Text("Ninguna de las dos primeras opciones está confirmada en TiviMate: desactivadas por defecto.", style = MaterialTheme.typography.bodySmall)
         }
-        Tarjeta {
-            Text("Decisiones manuales", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Decisiones manuales") {
             FilaFoco(onClick = { nav.ir(Destino.Historial) }) { Text("Historial y deshacer →") }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 BotonSecundario("Exportar (JSON)") { exportarDecisiones.launch("decisiones_iptvgestor.json") }
                 BotonSecundario("Importar (JSON o alias_epg.txt)") { importarDecisiones.launch(arrayOf("application/json", "text/plain", "*/*")) }
             }
         }
-        Tarjeta {
-            Text("Aplicación", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Aplicación") {
             FilaFoco(onClick = { nav.ir(Destino.Vod) }) { Text("Películas y series (VOD) →") }
             FilaFoco(onClick = { nav.ir(Destino.Utilidades) }) { Text("Servidor local, subida, comprobar enlaces y bloqueo parental →") }
             FilaFoco(onClick = { nav.ir(Destino.Actualizaciones) }) {

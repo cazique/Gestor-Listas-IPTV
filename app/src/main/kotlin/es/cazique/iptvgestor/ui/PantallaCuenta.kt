@@ -98,8 +98,7 @@ fun PantallaCuenta() {
             else -> Unit
         }
         mensaje?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }
-        Tarjeta {
-            Text("Arrancar sin red", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Arrancar sin red") {
             Text("Importa primero live.json (get_live_streams) y después el archivo de categorías (get_live_categories).")
             BotonSecundario("Importar archivos") { elegirStreams.launch(arrayOf("application/json", "text/plain", "*/*")) }
         }

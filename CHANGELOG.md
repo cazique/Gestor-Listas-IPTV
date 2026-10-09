@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.4.19 — Diseño y verificación
+- Nuevo diseño: paleta azul noche y ámbar, iconos propios en la navegación, tarjetas con título, cifras grandes en el resumen, etiquetas de capa y estado, estados vacíos y foco más visible en la TV.
+- Arreglo del cierre en Android 16 (expresiones regulares compatibles con ICU) y registro de fallos con opción de compartir.
+- CI: arranque en emuladores de móvil y Android TV, prueba instrumentada del motor con los fixtures, capturas adjuntas a cada Release; no se publica nada que no arranque.
+
 ## Fase 4 — VOD (gestión, sin reproducir)
 - Películas (`get_vod_streams`) y series (`get_series`, `get_series_info`), guardadas en archivos privados de la app.
 - Filtro por categorías (por defecto, las que empiezan por «ES»), duplicados por `tmdb` y, si falta, por título normalizado y año.

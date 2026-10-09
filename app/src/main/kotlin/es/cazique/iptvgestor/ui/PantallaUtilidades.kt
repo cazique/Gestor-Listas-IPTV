@@ -70,8 +70,7 @@ fun PantallaUtilidades() {
 
     PantallaBase("Utilidades", conAtras = true) {
         mensaje?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }
-        Tarjeta {
-            Text("Servidor local de la lista", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Servidor local de la lista") {
             Text("Para que TiviMate lea una dirección en lugar de un archivo. Solo funciona mientras está encendido (con notificación y botón de parada).")
             FilaInterruptor("Servidor encendido", servidor.activo) { on ->
                 if (on) arrancar(red) else ServicioServidor.detener(context)
@@ -83,8 +82,7 @@ fun PantallaUtilidades() {
             servidor.error?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
             Text("También: /lista_<paquete>.m3u e /informe.txt. Con TiviMate en este mismo Google TV usa la dirección 127.0.0.1.", style = MaterialTheme.typography.bodySmall)
         }
-        Tarjeta {
-            Text("Subir a mi servidor (HTTP PUT o WebDAV)", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Subir a mi servidor (HTTP PUT o WebDAV)") {
             Text(subida?.let { "Destino: " + it.first.substringBefore('?') } ?: "Sin configurar")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 BotonSecundario("Configurar") { dialogo = DialogoUtil.SUBIDA }
@@ -94,8 +92,7 @@ fun PantallaUtilidades() {
                 scope.launch { ajustes.guardar(Ajustes.K.SUBIR_AUTO, it) }
             }
         }
-        Tarjeta {
-            Text("Comprobar enlaces", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Comprobar enlaces") {
             Text("Prueba las variantes de los paquetes de una en una (nunca en paralelo). Antes de cada prueba consulta las conexiones en uso: si alguien está viendo algo, se detiene. Mide el tiempo hasta el primer dato y la tasa de bits aproximada. No cambia nada sin tu confirmación.")
             FilaFoco(onClick = { dialogo = DialogoUtil.ESPERA }) {
                 Text("Espera entre pruebas (provisional)", Modifier.weight(1f)); Text("${prefs?.get(Ajustes.K.ESPERA_ENLACES) ?: 10} s")
@@ -128,8 +125,7 @@ fun PantallaUtilidades() {
                 }
             }
         }
-        Tarjeta {
-            Text("Bloqueo parental", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Bloqueo parental") {
             val activo = prefs?.get(Ajustes.K.PIN_ACTIVO) ?: true
             val hayPin = prefs?.get(Ajustes.K.PIN_HASH) != null
             Text(

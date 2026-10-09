@@ -182,6 +182,13 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS || 'iptvgestor' }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.KEYSTORE_PASSWORD }}
         run: tools/ci_firmar.sh app/build/outputs/apk/release/app-release-unsigned.apk salida/app-release.apk
+      - name: Capturas del emulador
+        if: steps.secretos.outputs.hay == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: emulador-*
+          path: capturas
+          merge-multiple: true
       - name: update.json, SHA256SUMS y notas
         if: steps.secretos.outputs.hay == 'true'
         env:
@@ -200,7 +207,9 @@ jobs:
           fi
           extra=()
           if [ "$PRELIMINAR" = "true" ]; then extra+=(--prerelease); else extra+=(--latest); fi
+          capturas=()
+          for f in capturas/captura-*.png; do [ -s "$f" ] && capturas+=("$f"); done
           gh release create "$etiqueta" \
-            salida/app-release.apk salida/update.json salida/SHA256SUMS \
+            salida/app-release.apk salida/update.json salida/SHA256SUMS "${capturas[@]}" \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "Gestor IPTV $VERSION_NAME" --notes-file salida/notas.md "${extra[@]}"

@@ -29,14 +29,19 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import es.cazique.iptvgestor.IptvGestorApp
+import es.cazique.iptvgestor.R
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 
 /** Destinos principales: barra inferior en el teléfono y menú lateral en la TV (sección 6.3). */
-enum class Seccion(val titulo: String, val simbolo: String) {
-    RESUMEN("Resumen", "⌂"),
-    LISTA("Lista", "☰"),
-    REVISAR("Revisar", "✓"),
-    EXPORTAR("Exportar", "⇪"),
-    AJUSTES("Ajustes", "⚙"),
+enum class Seccion(val titulo: String, val icono: Int) {
+    RESUMEN("Resumen", R.drawable.ic_inicio),
+    LISTA("Lista", R.drawable.ic_lista),
+    REVISAR("Revisar", R.drawable.ic_revisar),
+    EXPORTAR("Exportar", R.drawable.ic_exportar),
+    AJUSTES("Ajustes", R.drawable.ic_ajustes),
 }
 
 /** Pantallas secundarias que se apilan sobre la sección. */
@@ -116,14 +121,20 @@ fun AppRaiz(
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             if (tv) {
                 Row(Modifier.fillMaxSize().safeDrawingPadding()) {
-                    NavigationRail {
+                    NavigationRail(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        header = {
+                            Icon(painterResource(R.drawable.ic_launcher_frente), null, tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 12.dp, bottom = 12.dp).size(56.dp))
+                        },
+                    ) {
                         Seccion.entries.forEach { s ->
                             NavigationRailItem(
                                 selected = nav.seccion == s,
                                 onClick = { nav.seccion(s) },
-                                icon = { Text(s.simbolo, style = MaterialTheme.typography.titleLarge) },
+                                icon = { Icon(painterResource(s.icono), contentDescription = null) },
                                 label = { Text(s.titulo) },
-                                modifier = Modifier.testTag("nav_${s.name}"),
+                                modifier = Modifier.testTag("nav_${s.name}").padding(vertical = 4.dp),
                             )
                         }
                     }
@@ -132,12 +143,12 @@ fun AppRaiz(
             } else {
                 Scaffold(
                     bottomBar = {
-                        NavigationBar {
+                        NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
                             Seccion.entries.forEach { s ->
                                 NavigationBarItem(
                                     selected = nav.seccion == s,
                                     onClick = { nav.seccion(s) },
-                                    icon = { Text(s.simbolo, style = MaterialTheme.typography.titleLarge) },
+                                    icon = { Icon(painterResource(s.icono), contentDescription = null) },
                                     label = { Text(s.titulo) },
                                     modifier = Modifier.testTag("nav_${s.name}"),
                                 )

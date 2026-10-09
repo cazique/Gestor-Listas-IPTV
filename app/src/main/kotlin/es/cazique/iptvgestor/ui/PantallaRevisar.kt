@@ -101,7 +101,7 @@ fun PantallaRevisar() {
             },
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Cabecera("Por revisar (${casos.size})", false) {}
+        Cabecera("Por revisar (${casos.size})", false, "Lo que la app no sabe resolver sola, con sugerencias") {}
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             FilterChip(selected = tipo == null, onClick = { tipo = null; indice = 0 }, label = { Text("Todo") })
             TipoCaso.entries.forEach { t ->
@@ -111,7 +111,8 @@ fun PantallaRevisar() {
             FilterChip(selected = tanda, onClick = { tanda = !tanda; indice = 0 }, label = { Text("Revisar en tanda") }, modifier = Modifier.testTag("tanda"))
         }
         if (tanda) Text("Atajos: ⏩ / CH+ / N siguiente · ⏪ / CH− / P anterior · Centro: elegir botón", style = MaterialTheme.typography.bodySmall)
-        if (visibles.isEmpty()) Text("No hay nada pendiente. ✓")
+        if (visibles.isEmpty()) EstadoVacio(es.cazique.iptvgestor.R.drawable.ic_revisar, "Todo revisado",
+            "No hay canales sin guía, dudosos ni duplicados pendientes.")
         if (tanda) {
             visibles.getOrNull(indice)?.let { caso ->
                 Text("Caso ${indice + 1} de ${visibles.size}")
@@ -154,7 +155,7 @@ private fun TarjetaCaso(
     onSiguiente: (() -> Unit)?,
 ) {
     Tarjeta(modifier) {
-        Text(caso.tipo.titulo, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
+        Etiqueta(caso.tipo.titulo, MaterialTheme.colorScheme.secondary)
         Text(caso.descripcion, style = MaterialTheme.typography.titleMedium)
         caso.sugerencias.forEachIndexed { i, s ->
             Text("${if (i == 0) "Sugerencia" else "Otra"}: ${s.texto} (${(s.confianza * 100).toInt()} %)", style = MaterialTheme.typography.bodySmall)

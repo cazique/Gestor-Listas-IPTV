@@ -23,9 +23,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalClipboardManager
+import android.content.ClipData
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import es.cazique.iptvgestor.core.ModoExportacion
 import es.cazique.iptvgestor.datos.Ajustes
@@ -39,7 +40,7 @@ fun PantallaExportar(abrirIntent: (Intent) -> Unit) {
     val app = LocalApp.current
     val ajustes = app.ajustes
     val context = LocalContext.current
-    val portapapeles = LocalClipboardManager.current
+    val portapapeles = LocalClipboard.current
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     val prefs by ajustes.datos.collectAsState(initial = null)
@@ -83,8 +84,7 @@ fun PantallaExportar(abrirIntent: (Intent) -> Unit) {
     }
 
     PantallaBase("Exportar") {
-        Tarjeta {
-            Text("Formato de salida", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Formato de salida") {
             listOf(
                 ModoExportacion.TODO to "Todo en un archivo (lista.m3u)",
                 ModoExportacion.POR_PAQUETE to "Un archivo por paquete o grupo",
@@ -96,8 +96,7 @@ fun PantallaExportar(abrirIntent: (Intent) -> Unit) {
                 }
             }
         }
-        Tarjeta {
-            Text("Guardar o compartir", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Guardar o compartir") {
             Text("Carpeta: " + (carpeta?.let { Uri.parse(it).lastPathSegment } ?: "sin elegir"))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 BotonSecundario("Elegir carpeta") {
@@ -112,10 +111,9 @@ fun PantallaExportar(abrirIntent: (Intent) -> Unit) {
             mensaje?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }
             BotonSecundario("Servidor local y subida a mi servidor →") { nav.ir(Destino.Utilidades) }
         }
-        Tarjeta {
-            Text("Guía para TiviMate", style = MaterialTheme.typography.titleMedium)
+        Tarjeta(titulo = "Guía para TiviMate") {
             Text(urlGuia, style = MaterialTheme.typography.bodySmall)
-            BotonSecundario("Copiar dirección de la guía") { portapapeles.setText(AnnotatedString(urlGuia)); mensaje = "Dirección copiada" }
+            BotonSecundario("Copiar dirección de la guía") { scope.launch { portapapeles.setClipEntry(ClipEntry(ClipData.newPlainText("Guía", urlGuia))) }; mensaje = "Dirección copiada" }
             Text(
                 "TiviMate puede no leer la guía de la cabecera de la lista. En TiviMate:\n" +
                     "1. Añade la lista como «Lista M3U» (por archivo o URL), no como Xtream Codes: Xtream no pasaría por esta limpieza.\n" +

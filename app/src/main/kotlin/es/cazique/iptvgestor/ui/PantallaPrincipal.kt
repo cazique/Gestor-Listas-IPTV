@@ -66,31 +66,22 @@ fun PantallaPrincipal(app: IptvGestorApp, tv: Boolean, buscarAlAbrir: Boolean, a
         if (tv) runCatching { foco.requestFocus() }
     }
 
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            Modifier.safeDrawingPadding().verticalScroll(rememberScrollState()).padding(if (tv) 48.dp else 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Cabecera(stringResource(R.string.app_name), LocalNav.current.pila.size > 1) { nav.atras() }
+    PantallaBase("Versión y actualizaciones", conAtras = nav.pila.size > 1, subtitulo = "Las versiones nuevas se descargan de los Releases de GitHub") {
+        Tarjeta(titulo = stringResource(R.string.app_name), icono = R.drawable.ic_tv, destacada = true) {
             Text(
                 stringResource(R.string.version, gestor.versionName, gestor.versionCode),
+                style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.testTag("version"),
             )
-            Text(stringResource(R.string.prueba_actualizacion), style = MaterialTheme.typography.bodySmall)
-            actualizadaA?.let {
-                Card(Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.actualizada_a, it), Modifier.padding(16.dp), color = MaterialTheme.colorScheme.secondary)
-                }
-            }
+            actualizadaA?.let { Etiqueta(stringResource(R.string.actualizada_a, it), MaterialTheme.colorScheme.secondary) }
             BotonFoco(
                 texto = stringResource(R.string.buscar_actualizaciones),
                 modifier = Modifier.focusRequester(foco).testTag("buscar"),
                 habilitado = estado !is EstadoActualizacion.Buscando && estado !is EstadoActualizacion.Descargando,
             ) { scope.launch { gestor.comprobar() } }
-
             when (val e = estado) {
                 EstadoActualizacion.Buscando -> Text(stringResource(R.string.buscando))
-                EstadoActualizacion.AlDia -> Text(stringResource(R.string.al_dia))
+                EstadoActualizacion.AlDia -> Etiqueta(stringResource(R.string.al_dia), MaterialTheme.colorScheme.tertiary)
                 is EstadoActualizacion.Descargando -> {
                     Text(stringResource(R.string.descargando, e.porcentaje))
                     LinearProgressIndicator(progress = { e.porcentaje / 100f }, modifier = Modifier.fillMaxWidth())
@@ -100,15 +91,18 @@ fun PantallaPrincipal(app: IptvGestorApp, tv: Boolean, buscarAlAbrir: Boolean, a
                 is EstadoActualizacion.Error -> Text(stringResource(R.string.error, e.mensaje), color = MaterialTheme.colorScheme.error)
                 else -> Unit
             }
-
-            Spacer(Modifier.padding(4.dp))
+        }
+        Tarjeta(titulo = "Opciones") {
             FilaInterruptor(stringResource(R.string.comprobar_auto), auto) { v -> scope.launch { app.ajustes.guardar(Ajustes.K.COMPROBAR_AUTO, v) } }
             FilaInterruptor(stringResource(R.string.canal_pruebas), canalPruebas) { v -> scope.launch { app.ajustes.guardar(Ajustes.K.CANAL_PRUEBAS, v) } }
+        }
+        Tarjeta(titulo = "Prueba de actualización") {
+            Text("Escribe algo aquí antes de actualizar: debe seguir igual después.", style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(
                 value = notaEditada,
                 onValueChange = { notaEditada = it },
                 label = { Text(stringResource(R.string.nota_prueba)) },
-                modifier = Modifier.fillMaxWidth().widthIn(max = 600.dp).testTag("nota"),
+                modifier = Modifier.fillMaxWidth().testTag("nota"),
                 singleLine = true,
             )
             BotonFoco(stringResource(R.string.aceptar)) { scope.launch { app.ajustes.guardar(Ajustes.K.NOTA_PRUEBA, notaEditada) } }

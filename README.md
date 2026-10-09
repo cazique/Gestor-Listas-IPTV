@@ -7,6 +7,14 @@ App Android (**un solo APK para móvil y Google TV**) que **gestiona y limpia** 
 
 Ni el repositorio ni el APK contienen tus credenciales, las del proveedor ni la clave de firma.
 
+## Capturas
+
+Las saca GitHub Actions en un emulador real en cada versión (móvil con Android 15 y Android TV) y se adjuntan al Release:
+
+| Móvil | Móvil · Ajustes | Android TV |
+|---|---|---|
+| ![Móvil](https://github.com/cazique/Gestor-Listas-IPTV/releases/latest/download/captura-movil.png) | ![Ajustes](https://github.com/cazique/Gestor-Listas-IPTV/releases/latest/download/captura-movil-ajustes.png) | ![TV](https://github.com/cazique/Gestor-Listas-IPTV/releases/latest/download/captura-tv.png) |
+
 ---
 
 ## 1. Puesta en marcha (una sola vez)
@@ -122,14 +130,19 @@ JDK 17 o posterior y Android SDK con la plataforma 37. El APK de release sale si
 
 ## Verificación pendiente
 
-Lo que **no** se ha podido comprobar desde el entorno de desarrollo (sin Android SDK local, sin emulador y sin acceso al proveedor). Todo lo demás está verificado por GitHub Actions (compilación debug y release, pruebas unitarias y de interfaz con Robolectric y lint).
+**Verificado automáticamente en GitHub Actions en cada versión** (nada se publica si falla):
+- Compilación debug y release, lint sin errores, 45 pruebas del núcleo con los fixtures (cifras de la sección 11.2), pruebas de interfaz (Robolectric: táctil y D-pad), persistencia y migración de la base de datos.
+- **Arranque en emulador de móvil (Android 15) y de Android TV**: la app se abre, sigue viva a los 25 s y no registra errores, ni siquiera en segundo plano.
+- **Prueba instrumentada en el emulador**: los 24.401 canales de los fixtures pasan por el motor sobre el motor de expresiones regulares de Android (ICU) y dan las mismas cifras (capas M+ 201/80/57/29/15, Vodafone 140/48/1, Orange 146/2; 2.816 entradas finales).
+- Firma con la clave del proyecto (`CN=Gestor IPTV, O=cazique, C=ES`, SHA-256 `53:1D:D1:72:…:0E:F9`) y SHA-256 del APK igual al de `update.json`.
+- En tu Samsung SM-A176B (Android 16), el registro de fallos permitió localizar y corregir un error de compatibilidad de expresiones regulares (versiones 0.4.14–0.4.16).
 
-1. ~~Firma y publicación del Release~~ **Verificado el 9-10-2026:** el Release `v0.4.9` se publicó con `app-release.apk`, `update.json` y `SHA256SUMS`; el SHA-256 coincide con `update.json` y el certificado es `CN=Gestor IPTV, O=cazique, C=ES` (SHA-256 `53:1D:D1:72:…:0E:F9`).
-2. **Actualización de extremo a extremo** (instalar N, publicar N+1, actualizar desde la app conservando ajustes y decisiones). Pasos: sección 2.
-3. **Pantalla «Instalar apps desconocidas» en tu Google TV**: si la app no puede abrirla directamente, abre la de Seguridad; comprueba que puedes activarla con el mando.
-4. **Primera sincronización real** con tu proveedor (la API se ha probado con datos simulados y con los fixtures). Comprueba que las cifras del Resumen se parecen a las de referencia: M+ 201 canales (capas 201/80/57/29/15), Vodafone 140 (140/48/1), Orange 146 (146/2); con guía, M+ 136, Vodafone 87 y Orange 109.
-5. **HTTPS del proveedor**: si tu servidor ofrece HTTPS en otro puerto, la app lo intenta tras la primera respuesta por HTTP (con tu permiso).
-6. **TiviMate**: haz la prueba de `tools/prueba_tivimate.m3u`; después carga la lista completa y comprueba si **todas** las entradas con el mismo `tvg-id` (M+ 1, M+ 2…) muestran la guía. Si no, exporta «un archivo por capa» y carga los archivos como listas separadas.
-7. **Selector de carpetas en Google TV** (`ACTION_OPEN_DOCUMENT_TREE`): si no existe, usa «Compartir». Prueba rápida: `adb shell am start -a android.intent.action.OPEN_DOCUMENT_TREE`.
-8. **Capturas de pantalla** de móvil y TV: no se han podido generar sin emulador.
-9. **Pruebas en emulador o dispositivo** de teléfono y de Android TV.
+**Pendiente de comprobar por ti** (no se puede hacer sin tus dispositivos ni tu cuenta):
+1. **Actualización de extremo a extremo:** instala una versión, pulsa *Buscar actualizaciones* cuando haya otra más nueva y comprueba que se instala conservando la «Nota de prueba» y tus decisiones (sección 2).
+2. **Google TV real:** la pantalla «Fuentes desconocidas» para esta app y el manejo con el mando.
+3. **Primera sincronización real** con tu proveedor y cifras parecidas a las de referencia; si tu servidor ofrece HTTPS en otro puerto, la app lo intenta tras la primera respuesta por HTTP (con tu permiso).
+4. **TiviMate:** la prueba de `tools/prueba_tivimate.m3u`; después, la lista completa: si las entradas con el mismo `tvg-id` (M+ 1, M+ 2…) no muestran la guía, exporta «un archivo por capa».
+5. **Selector de carpetas en Google TV** (`ACTION_OPEN_DOCUMENT_TREE`); si no existe, usa «Compartir» o el servidor local. Prueba rápida: `adb shell am start -a android.intent.action.OPEN_DOCUMENT_TREE`.
+6. **Servidor local** desde TiviMate (127.0.0.1 en la misma TV o la IP con ruta secreta desde otro aparato) y **comprobación de enlaces** con tu conexión única; ajusta la espera según el retraso real de `active_cons` (prueba 6 de `docs/PREGUNTAS_IA_RESPONDIDAS.md`).
+7. **VOD real:** formato de los títulos de tus películas y series (no había `vod.json` en los fixtures).
+8. **Licencia de la guía e iconos de dobleM:** confirmar con su autor.

@@ -4,7 +4,13 @@ package es.cazique.iptvgestor.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,11 +22,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import es.cazique.iptvgestor.R
 import es.cazique.iptvgestor.datos.Ajustes
 import kotlinx.coroutines.launch
 
@@ -44,58 +53,86 @@ fun PantallaResumen() {
         if (tv) runCatching { foco.requestFocus() }
     }
 
-    PantallaBase("Resumen") {
+    val ultima = prefs?.get(Ajustes.K.ULTIMA_SINCRONIZACION)
+    val estado = prefs?.get(Ajustes.K.ESTADO_SINCRONIZACION)
+    val conError = estado?.startsWith("error") == true
+
+    PantallaBase("Gestor IPTV", subtitulo = "Tu lista limpia, ordenada y con guía") {
         if (hayCuenta == false) {
-            Tarjeta {
-                Text("Configura la cuenta del proveedor para empezar (o importa live.json y las categorías).")
+            Tarjeta(titulo = "Empieza aquí", icono = R.drawable.ic_ajustes, destacada = true) {
+                Text("Configura la cuenta del proveedor (o importa live.json y las categorías) para crear tu lista.")
                 Button(onClick = { nav.ir(Destino.Cuenta) }) { Text("Configurar cuenta") }
             }
         }
-        val ultima = prefs?.get(Ajustes.K.ULTIMA_SINCRONIZACION)
-        val estado = prefs?.get(Ajustes.K.ESTADO_SINCRONIZACION)
-        Tarjeta {
-            Text("Sincronización", style = MaterialTheme.typography.titleMedium)
-            Dato("Última", fechaCorta(ultima))
-            Dato("Estado", estado ?: "—")
-            Dato("Guía actualizada", fechaCorta(prefs?.get(Ajustes.K.ULTIMA_EPG)))
-            progreso?.let { Text(it); LinearProgressIndicator(Modifier.testTag("progreso")) }
+
+        Tarjeta(titulo = "Sincronización", icono = R.drawable.ic_sincronizar) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                when {
+                    progreso != null -> Etiqueta("En curso", MaterialTheme.colorScheme.secondary)
+                    conError -> Etiqueta("Con error", MaterialTheme.colorScheme.error)
+                    ultima != null -> Etiqueta("Al día", MaterialTheme.colorScheme.tertiary)
+                    else -> Etiqueta("Sin sincronizar", MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Text("Última: ${fechaCorta(ultima)}", style = MaterialTheme.typography.bodySmall)
+            }
+            if (conError) Text(estado.orEmpty().removePrefix("error: "), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            Text("Guía de dobleM: ${fechaCorta(prefs?.get(Ajustes.K.ULTIMA_EPG))}", style = MaterialTheme.typography.bodySmall)
+            progreso?.let { Text(it); LinearProgressIndicator(Modifier.fillMaxWidth().testTag("progreso")) }
             mensaje?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                BotonFoco("Sincronizar ahora", Modifier.focusRequester(foco).testTag("sincronizar"), habilitado = progreso == null) {
-                    scope.launch {
-                        val r = repo.sincronizar()
-                        mensaje = r.error?.let { "Error: $it" } ?: r.informe?.let {
-                            val auto = app.exportador.exportarAuto()
-                            "Hecho. Añadidos ${it.anadidos.size}, quitados ${it.quitados.size}, cambiados ${it.cambiados.size}" +
-                                (auto?.let { e -> ". Exportación automática: $e" } ?: "")
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            val r = repo.sincronizar()
+                            mensaje = r.error?.let { "Error: $it" } ?: r.informe?.let {
+                                val auto = app.exportador.exportarAuto()
+                                "Hecho: ${it.anadidos.size} añadidos, ${it.quitados.size} quitados, ${it.cambiados.size} cambiados" +
+                                    (auto?.let { e -> ". Exportación automática: $e" } ?: "")
+                            }
                         }
-                    }
+                    },
+                    enabled = progreso == null,
+                    modifier = Modifier.focusRequester(foco).testTag("sincronizar"),
+                ) {
+                    Icon(painterResource(R.drawable.ic_sincronizar), null, Modifier.size(18.dp))
+                    Text("  Sincronizar ahora")
                 }
                 BotonSecundario("Actualizar guía") { scope.launch { mensaje = repo.actualizarEpg() ?: "Guía actualizada" } }
                 BotonSecundario("Informe de cambios") { nav.ir(Destino.Informes) }
             }
         }
+
         val r = resultado
         if (r != null && r.cifras.canalesOrigen > 0) {
             val c = r.cifras
-            Tarjeta {
-                Text("Cifras", style = MaterialTheme.typography.titleMedium)
-                Dato("Canales de origen", "%,d".format(c.canalesOrigen))
-                Dato("Grupos de origen", "${c.gruposOrigen}")
-                Dato("Conservados", "%,d en %d grupos".format(c.entradasConservadas, c.gruposConservados))
-                Dato("En la lista final", "%,d en %d grupos".format(c.entradasLista, c.gruposLista))
-                Dato("Canales con guía", "${c.conGuia} de ${c.canalesLogicos}")
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                val ancho = Modifier.widthIn(min = if (tv) 200.dp else 150.dp)
+                Cifra("%,d".format(c.entradasLista), "canales en la lista final", ancho)
+                Cifra("${c.gruposLista}", "grupos", ancho)
+                Cifra("${c.conGuia}", "canales con guía (de ${c.canalesLogicos})", ancho, MaterialTheme.colorScheme.tertiary)
+                Cifra("${casos.size}", "por revisar", ancho.width(if (tv) 200.dp else 150.dp),
+                    if (casos.isEmpty()) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary)
             }
-            Tarjeta {
-                Text("Paquetes y capas", style = MaterialTheme.typography.titleMedium)
+            Tarjeta(titulo = "Paquetes y capas", icono = R.drawable.ic_lista) {
                 c.paquetes.forEach { p ->
-                    Dato(p.nombre, "${p.canales} canales · ${p.entradas} entradas · guía ${p.conGuia}")
-                    Text("Capas: " + p.capas.mapIndexed { i, n -> "${p.nombre} ${i + 1}: $n" }.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+                    Text(p.nombre, style = MaterialTheme.typography.titleMedium)
+                    Text("${p.canales} canales · ${p.entradas} entradas · ${p.conGuia} con guía", style = MaterialTheme.typography.bodySmall)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        p.capas.forEachIndexed { i, n -> Etiqueta("${p.nombre} ${i + 1}: $n") }
+                    }
                 }
             }
+            Tarjeta(titulo = "Origen", icono = R.drawable.ic_tv) {
+                Dato("Canales del proveedor", "%,d".format(c.canalesOrigen))
+                Dato("Grupos del proveedor", "${c.gruposOrigen}")
+                Dato("Conservados", "%,d en %d grupos".format(c.entradasConservadas, c.gruposConservados))
+                Dato("Separadores descartados", "${c.separadores}")
+            }
+        } else if (hayCuenta == true) {
+            EstadoVacio(R.drawable.ic_sincronizar, "Aún no hay canales", "Pulsa «Sincronizar ahora» para descargar la lista del proveedor y la guía.")
         }
-        Tarjeta {
-            Text("Accesos directos", style = MaterialTheme.typography.titleMedium)
+
+        Tarjeta(titulo = "Accesos directos") {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 BotonSecundario("Por revisar (${casos.size})") { nav.seccion(Seccion.REVISAR) }
                 BotonSecundario("Vista previa") { nav.seccion(Seccion.LISTA) }
