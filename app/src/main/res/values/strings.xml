@@ -23,5 +23,6 @@
     <string name="notif_canal">Actualizaciones</string>
     <string name="notif_titulo">Hay una versión nueva de Gestor IPTV</string>
     <string name="notif_texto">Versión %1$s disponible. Toca para instalarla.</string>
+    <string name="prueba_actualizacion">Fase 0 · versión de prueba de actualización n.º 2</string>
     <string name="error">Error: %1$s</string>
 </resources>

@@ -75,6 +75,7 @@ fun PantallaPrincipal(app: IptvGestorApp, tv: Boolean, buscarAlAbrir: Boolean, a
                 stringResource(R.string.version, gestor.versionName, gestor.versionCode),
                 modifier = Modifier.testTag("version"),
             )
+            Text(stringResource(R.string.prueba_actualizacion), style = MaterialTheme.typography.bodySmall)
             actualizadaA?.let {
                 Card(Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.actualizada_a, it), Modifier.padding(16.dp), color = MaterialTheme.colorScheme.secondary)
