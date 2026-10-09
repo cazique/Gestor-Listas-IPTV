@@ -6,7 +6,7 @@ Registro de decisiones tomadas sin preguntar (regla 1 de `SPEC.md`). Formato: de
 
 | Decisión | Alternativas | Motivo |
 |---|---|---|
-| `applicationId = es.cazique.iptvgestor` | Derivarlo del nombre del repositorio | Estable e independiente del repositorio (que se llama `rclone-web` por herencia). Android solo actualiza con el mismo id y la misma firma |
+| `applicationId = es.cazique.iptvgestor` | Derivarlo del nombre del repositorio | Estable e independiente del repositorio (se llamaba `rclone-web` y ahora `Gestor-Listas-IPTV`; GitHub redirige el nombre antiguo, así que las versiones ya instaladas siguen encontrando las actualizaciones). Android solo actualiza con el mismo id y la misma firma |
 | La compilación `debug` usa `es.cazique.iptvgestor.debug` | Mismo id | Así un APK de depuración nunca choca con el de release instalado |
 | Clave RSA 4096, PKCS12, alias `iptvgestor`, validez 10.950 días (30 años), creada una sola vez con `keytool` el 9-10-2026 | RSA 2048 | Android recomienda ≥ 2048 bits y ≥ 25 años. Solo vive en los secretos de GitHub Actions y en la copia que guarda Jorge |
 | `versionCode = 100 + github.run_number` del flujo `Android` | Número de commits | Crece siempre, aunque se publique dos veces el mismo commit (ejecución manual) |
@@ -72,7 +72,7 @@ Cifras de la lista final completa con los fixtures y la guía del 9-10-2026: 2.9
 
 | Decisión | Motivo |
 |---|---|
-| Repositorio de actualizaciones `cazique/rclone-web` (público, comprobado el 9-10-2026), fijado en `BuildConfig` desde `GITHUB_REPOSITORY` | Sin tokens en el APK |
+| Repositorio de actualizaciones `cazique/Gestor-Listas-IPTV` (público, comprobado el 9-10-2026), fijado en `BuildConfig` desde `GITHUB_REPOSITORY` | Sin tokens en el APK |
 | Dominios permitidos: `api.github.com`, `github.com`, `objects.githubusercontent.com`, `release-assets.githubusercontent.com`, solo HTTPS, también tras redirecciones | Los archivos de los Releases redirigen a `release-assets.githubusercontent.com` (antes `objects.githubusercontent.com`) |
 | ETag e `If-None-Match` en la API; comprobación al abrir (≤ 1 vez cada 12 h), diaria con WorkManager y con el botón | Sección 6.4.4 |
 | Verificación: `versionCode` mayor, `minSdk`, SHA-256 de `update.json`, nombre de paquete y certificados idénticos a los de la app instalada | Sección 6.4.4 |

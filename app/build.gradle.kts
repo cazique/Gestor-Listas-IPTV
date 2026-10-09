@@ -12,7 +12,7 @@ plugins {
 val fase: String = Properties().apply { rootProject.file("version.properties").inputStream().use { load(it) } }.getProperty("fase", "0")
 val codigoVersion: Int = providers.environmentVariable("VERSION_CODE").orNull?.toIntOrNull() ?: 1
 val nombreVersion: String = providers.environmentVariable("VERSION_NAME").orNull ?: "0.$fase.0-dev"
-val repoActualizaciones: String = providers.environmentVariable("GITHUB_REPOSITORY").orNull ?: "cazique/rclone-web"
+val repoActualizaciones: String = providers.environmentVariable("GITHUB_REPOSITORY").orNull ?: "cazique/Gestor-Listas-IPTV"
 
 android {
     namespace = "es.cazique.iptvgestor"
