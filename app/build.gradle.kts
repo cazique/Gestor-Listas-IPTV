@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 // versionCode y versionName los fija GitHub Actions (variables de entorno); en local, valores de desarrollo.
@@ -59,6 +60,12 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.testLogging {
+                events("failed")
+                exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            }
+        }
     }
 
     packaging {
@@ -66,8 +73,12 @@ android {
     }
 }
 
+// Esquemas de Room versionados en app/schemas (el plugin evita escrituras simultáneas debug/release).
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
 ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.generateKotlin", "true")
 }
 
@@ -86,6 +97,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
     implementation(libs.documentfile)
+    implementation(libs.ktor.server.cio)
     implementation(libs.datastore.preferences)
     implementation(libs.work.runtime)
     implementation(libs.kotlinx.coroutines.android)

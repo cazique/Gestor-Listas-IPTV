@@ -58,8 +58,25 @@ data class InformeEntidad(
     val json: String,
 )
 
+/** Resultado de la comprobación de enlaces por variante (sin URL). Añadida en el esquema 2. */
+@Entity(tableName = "resultado_enlace")
+data class ResultadoEnlaceEntidad(
+    @PrimaryKey val streamId: Long,
+    val estado: String,
+    val msPrimerDato: Long?,
+    val kbps: Long?,
+    val bytes: Long,
+    val fecha: Long,
+    val detalle: String,
+)
+
 @Dao
 interface DaoDatos {
+    @Upsert suspend fun guardarResultado(r: ResultadoEnlaceEntidad)
+    @Query("SELECT * FROM resultado_enlace") suspend fun resultadosEnlaces(): List<ResultadoEnlaceEntidad>
+    @Query("SELECT * FROM resultado_enlace") fun resultadosEnlacesFlujo(): Flow<List<ResultadoEnlaceEntidad>>
+    @Query("DELETE FROM resultado_enlace") suspend fun borrarResultados()
+
     @Query("SELECT * FROM stream") suspend fun streams(): List<StreamEntidad>
     @Query("SELECT * FROM categoria ORDER BY orden") suspend fun categorias(): List<CategoriaEntidad>
     @Query("SELECT * FROM canal_epg ORDER BY posicion") suspend fun canalesEpg(): List<CanalEpgEntidad>
@@ -102,8 +119,11 @@ interface DaoDatos {
  * lleva su `Migration` en [Migraciones] y su prueba (MigracionesTest).
  */
 @Database(
-    entities = [StreamEntidad::class, CategoriaEntidad::class, CanalEpgEntidad::class, DecisionEntidad::class, InformeEntidad::class],
-    version = 1,
+    entities = [
+        StreamEntidad::class, CategoriaEntidad::class, CanalEpgEntidad::class, DecisionEntidad::class, InformeEntidad::class,
+        ResultadoEnlaceEntidad::class,
+    ],
+    version = 2,
     exportSchema = true,
 )
 abstract class BaseDatos : RoomDatabase() {
@@ -120,5 +140,16 @@ abstract class BaseDatos : RoomDatabase() {
 }
 
 object Migraciones {
-    val TODAS: Array<androidx.room.migration.Migration> = arrayOf()
+    /** 1 → 2: resultados de la comprobación de enlaces (Fase 3). No toca las tablas existentes. */
+    val DE_1_A_2 = object : androidx.room.migration.Migration(1, 2) {
+        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `resultado_enlace` (`streamId` INTEGER NOT NULL, `estado` TEXT NOT NULL, " +
+                    "`msPrimerDato` INTEGER, `kbps` INTEGER, `bytes` INTEGER NOT NULL, `fecha` INTEGER NOT NULL, " +
+                    "`detalle` TEXT NOT NULL, PRIMARY KEY(`streamId`))"
+            )
+        }
+    }
+
+    val TODAS: Array<androidx.room.migration.Migration> = arrayOf(DE_1_A_2)
 }

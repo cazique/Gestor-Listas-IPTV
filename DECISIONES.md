@@ -87,3 +87,16 @@ Cifras de la lista final completa con los fixtures y la guía del 9-10-2026: 2.9
 | `base-config cleartextTrafficPermitted="true"` | El host lo escribe el usuario; `domain-config` exige dominios fijos. **Riesgo:** la política de Android permite HTTP a cualquier dominio. Mitigación en la app: HTTPS primero, nunca degradar ante error de certificado, HTTP solo con consentimiento guardado por host; la autoactualización exige HTTPS por código |
 | `allowBackup=false` y reglas de extracción que lo excluyen todo | Sección 9 |
 | `tools/comprobar_secretos.sh` como `pre-commit` y en CI | Sección 1.10 |
+
+## Fase 3: salida y utilidades
+
+| Decisión | Alternativas | Motivo |
+|---|---|---|
+| Servidor local con **Ktor 3.6.0 (motor CIO)** en un servicio en primer plano **`specialUse`** con `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`, iniciado solo por el usuario, con notificación y botón «Parar» | `dataSync`, `connectedDevice`, NanoHTTPD | `dataSync` está limitado a 6 h cada 24 desde Android 15; `connectedDevice` exige permisos de otros usos (sección 7.2). Ktor está mantenido |
+| Puerto 8484; por defecto solo `127.0.0.1`; en red local, ruta con token aleatorio de 144 bits (`/token/lista.m3u`) | Puerto 8080 | 8080 suele estar ocupado en homelabs |
+| Subida a servidor propio por **HTTP PUT** (sirve para WebDAV) con autenticación básica opcional, credenciales cifradas como las del proveedor | SFTP | SFTP exige una librería SSH pesada; PUT/WebDAV cubre Nextcloud, nginx, Apache y rclone serve. SFTP queda pendiente |
+| Comprobación de enlaces: de uno en uno, consulta de `active_cons` antes de cada prueba (si > 0, se detiene), muestra de 6 s (máx. 8 MB), espera **provisional de 10 s** entre pruebas (configurable: 5–60 s), «lento» si < 1.500 kbps | Paralelo | Conexión única (secciones 3.3 y 7.3). El retraso real de `active_cons` lo medirá Jorge (prueba 6) |
+| Los resultados se guardan por `streamId` sin URL (tabla `resultado_enlace`, esquema 2, con migración 1→2 y prueba) | Guardar la URL | Sección 7.3 |
+| Opción «Ordenar las capas por tasa de bits medida» (desactivada): las variantes medidas van primero, de mayor a menor kbps; `SOLO EVENTOS`/`HDR` siguen al final | — | Sección 4.3 |
+| Bloqueo parental **activado por defecto** sin PIN: el contenido para adultos (`FOR ADULTS` e `is_adult = 1`) se oculta en la app hasta crear un PIN y desbloquear la sesión. PIN con PBKDF2-HMAC-SHA256, 120.000 iteraciones y sal aleatoria | SHA-256 simple | Sección 9 |
+| La lista exportada respeta el ajuste «Incluir canales para adultos» (activado por defecto) | — | Sección 6.2.9 |

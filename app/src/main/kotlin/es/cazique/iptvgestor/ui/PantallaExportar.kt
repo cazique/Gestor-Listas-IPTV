@@ -40,6 +40,7 @@ fun PantallaExportar(abrirIntent: (Intent) -> Unit) {
     val ajustes = app.ajustes
     val context = LocalContext.current
     val portapapeles = LocalClipboardManager.current
+    val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     val prefs by ajustes.datos.collectAsState(initial = null)
     var urlGuia by remember { mutableStateOf("") }
@@ -109,6 +110,7 @@ fun PantallaExportar(abrirIntent: (Intent) -> Unit) {
                 scope.launch { ajustes.guardar(Ajustes.K.EXPORTAR_AUTO, v) }
             }
             mensaje?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }
+            BotonSecundario("Servidor local y subida a mi servidor →") { nav.ir(Destino.Utilidades) }
         }
         Tarjeta {
             Text("Guía para TiviMate", style = MaterialTheme.typography.titleMedium)

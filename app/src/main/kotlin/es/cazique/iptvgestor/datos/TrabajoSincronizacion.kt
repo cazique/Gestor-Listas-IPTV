@@ -20,6 +20,7 @@ class TrabajoSincronizacion(context: Context, params: WorkerParameters) : Corout
         val r = app.repositorio.sincronizar()
         if (r.error != null) return if (runAttemptCount < 3) Result.retry() else Result.failure()
         app.exportador.exportarAuto()
+        if (app.ajustes.leer(Ajustes.K.SUBIR_AUTO) == true) app.repositorio.subirLista(app.exportador)
         return Result.success()
     }
 

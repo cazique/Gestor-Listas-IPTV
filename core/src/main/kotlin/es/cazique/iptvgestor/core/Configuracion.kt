@@ -46,6 +46,8 @@ data class ConfigMotor(
     val capasEnRestoGrupos: Boolean = false,
     val alias: AliasEpg = AliasEpg(),
     val aliasUsuario: Map<String, String> = emptyMap(),
+    /** Ordenar las variantes por la tasa de bits medida (sección 7.3) en lugar de por etiqueta. */
+    val ordenarPorTasa: Boolean = false,
 ) {
     /** Grupos que entran por prefijo (los de los paquetes deben ser de estos). */
     fun esGrupoPrincipal(grupo: String): Boolean = prefijosGrupo.any { grupo.uppercase().startsWith(it.uppercase()) }

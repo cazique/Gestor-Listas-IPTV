@@ -48,6 +48,7 @@ sealed interface Destino {
     data object Historial : Destino
     data object Informes : Destino
     data object Actualizaciones : Destino
+    data object Utilidades : Destino
 }
 
 class Navegador {
@@ -106,6 +107,7 @@ fun AppRaiz(
                 Destino.Paquetes -> PantallaPaquetes()
                 Destino.Historial -> PantallaHistorial()
                 Destino.Informes -> PantallaInformes(abrirIntent)
+                Destino.Utilidades -> PantallaUtilidades()
                 Destino.Actualizaciones -> PantallaPrincipal(app, tv, buscarActualizaciones, abrirIntent)
             }
         }

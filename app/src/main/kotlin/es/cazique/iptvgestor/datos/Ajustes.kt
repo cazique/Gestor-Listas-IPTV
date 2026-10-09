@@ -55,6 +55,10 @@ class Ajustes(private val context: Context) {
         val PIN_ACTIVO = booleanPreferencesKey("pin_activo")
         val PIN_HASH = stringPreferencesKey("pin_hash")
         val EXPORTAR_ADULTOS = booleanPreferencesKey("exportar_adultos")
+        val ESPERA_ENLACES = intPreferencesKey("espera_enlaces_s")
+        val SERVIDOR_RED = booleanPreferencesKey("servidor_red_local")
+        val SERVIDOR_TOKEN = stringPreferencesKey("servidor_token")
+        val SUBIR_AUTO = booleanPreferencesKey("subir_auto")
     }
 
     val datos: Flow<Preferences> = ds.data

@@ -76,4 +76,21 @@ class Credenciales(private val context: Context) {
     }
 
     suspend fun borrar() { context.secretos.edit { it.clear() } }
+
+    // Subida a un servidor propio (sección 7.4): también cifrada.
+    private val kSubidaUrl = stringPreferencesKey("subida_url")
+    private val kSubidaUsuario = stringPreferencesKey("subida_usuario")
+    private val kSubidaContrasena = stringPreferencesKey("subida_contrasena")
+
+    suspend fun guardarSubida(url: String, usuario: String, contrasena: String) {
+        context.secretos.edit {
+            it[kSubidaUrl] = cifrar(url); it[kSubidaUsuario] = cifrar(usuario); it[kSubidaContrasena] = cifrar(contrasena)
+        }
+    }
+
+    suspend fun leerSubida(): Triple<String, String, String>? {
+        val p = context.secretos.data.first()
+        val u = p[kSubidaUrl]?.let(::descifrar)?.takeIf { it.isNotBlank() } ?: return null
+        return Triple(u, p[kSubidaUsuario]?.let(::descifrar).orEmpty(), p[kSubidaContrasena]?.let(::descifrar).orEmpty())
+    }
 }

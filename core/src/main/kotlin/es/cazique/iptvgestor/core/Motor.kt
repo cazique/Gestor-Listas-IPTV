@@ -74,6 +74,8 @@ class Motor(private val config: ConfigMotor = ConfigMotor()) {
         categorias: List<Categoria>,
         epg: List<CanalEpg>,
         decisiones: List<Decision> = emptyList(),
+        /** kbps medidos por stream (comprobación de enlaces); solo se usan si `ordenarPorTasa`. */
+        tasas: Map<Long, Long> = emptyMap(),
     ): ResultadoMotor {
         val nombreGrupo = categorias.associate { it.id to it.nombre }
         val ordenGrupo = categorias.associate { it.nombre to it.orden }
@@ -129,7 +131,11 @@ class Motor(private val config: ConfigMotor = ConfigMotor()) {
         val cacheEpg = HashMap<String, Emparejado?>()
         val canales = agrupado.map { (k, ps) ->
             val (ambito, clave) = k
-            val ordenVariantes = compareBy<Variante>({ !it.preferida }, { it.puntos }, { if (config.respaldoAlFinal && it.respaldo) 1 else 0 }, { it.stream.num })
+            val ordenVariantes = if (config.ordenarPorTasa && tasas.isNotEmpty()) {
+                compareBy<Variante>({ !it.preferida }, { it.puntos >= 10 }, { -(tasas[it.stream.streamId] ?: -1L) }, { it.puntos }, { it.stream.num })
+            } else {
+                compareBy<Variante>({ !it.preferida }, { it.puntos }, { if (config.respaldoAlFinal && it.respaldo) 1 else 0 }, { it.stream.num })
+            }
             val variantes = ps.map { it.v }.sortedWith(ordenVariantes)
             val quitar = dec.deCanal(TipoDecision.QUITAR_EPG, clave)
             val asignar = dec.deCanal(TipoDecision.ASIGNAR_EPG, clave)

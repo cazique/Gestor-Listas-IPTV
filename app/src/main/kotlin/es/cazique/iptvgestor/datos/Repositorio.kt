@@ -25,6 +25,14 @@ import es.cazique.iptvgestor.core.ResultadoMotor
 import es.cazique.iptvgestor.core.Stream
 import es.cazique.iptvgestor.core.TipoDecision
 import es.cazique.iptvgestor.core.XtreamJson
+import es.cazique.iptvgestor.core.ComprobadorEnlaces
+import es.cazique.iptvgestor.core.EstadoEnlace
+import es.cazique.iptvgestor.core.OpcionesComprobacion
+import es.cazique.iptvgestor.core.Parada
+import es.cazique.iptvgestor.core.ResultadoEnlace
+import es.cazique.iptvgestor.core.Subidor
+import es.cazique.iptvgestor.datos.bd.ResultadoEnlaceEntidad
+import kotlinx.coroutines.runBlocking
 import es.cazique.iptvgestor.datos.bd.BaseDatos
 import es.cazique.iptvgestor.datos.bd.CanalEpgEntidad
 import es.cazique.iptvgestor.datos.bd.CategoriaEntidad
@@ -262,7 +270,8 @@ class Repositorio(
         val categorias = dao.categorias().map { Categoria(it.id, it.nombre, it.orden) }
         val streams = dao.streams().map { it.aDominio() }
         val decisiones = dao.decisiones().map { it.aDominio() }
-        val r = Motor(config).procesar(streams, categorias, canalesEpg(), decisiones)
+        val tasas = dao.resultadosEnlaces().mapNotNull { r -> r.kbps?.let { r.streamId to it } }.toMap()
+        val r = Motor(config).procesar(streams, categorias, canalesEpg(), decisiones, tasas)
         _resultado.value = r
         val ultimo = dao.ultimoInforme()?.let { runCatching { json.decodeFromString(InformeCambios.serializer(), it.json) }.getOrNull() }
         _casos.value = BandejaRevision.casos(r, decisiones, ultimo)
@@ -297,12 +306,58 @@ class Repositorio(
         mutex.withLock {
             withContext(Dispatchers.IO) {
                 bd.clearAllTables()
+                es.cazique.iptvgestor.servidor.ServicioServidor.detener(context)
                 credenciales.borrar()
                 ajustes.borrarTodo()
                 File(context.cacheDir, "exportar").deleteRecursively()
                 _resultado.value = null
                 _casos.value = emptyList()
             }
+        }
+    }
+
+    // ---------- Comprobación de enlaces (sección 7.3) ----------
+
+    val resultadosEnlaces: Flow<Map<Long, ResultadoEnlace>> = dao.resultadosEnlacesFlujo().map { l ->
+        l.associate { it.streamId to ResultadoEnlace(it.streamId, runCatching { EstadoEnlace.valueOf(it.estado) }.getOrDefault(EstadoEnlace.FALLA), it.msPrimerDato, it.kbps, it.bytes, it.fecha, it.detalle) }
+    }
+
+    /** Prueba de uno en uno; se detiene si hay otra conexión en uso o si se cancela. Devuelve un resumen. */
+    suspend fun comprobarEnlaces(streamIds: List<Long>, cancelado: () -> Boolean): String = withContext(Dispatchers.IO) {
+        val cuenta = cuentaEfectiva() ?: return@withContext "Falta configurar la cuenta"
+        val ua = ajustes.leer(Ajustes.K.USER_AGENT) ?: UA_PREDETERMINADO
+        val espera = (ajustes.leer(Ajustes.K.ESPERA_ENLACES) ?: 10) * 1000L
+        val formato = ajustes.leer(Ajustes.K.FORMATO) ?: "ts"
+        val c = ComprobadorEnlaces(http, ClienteXtream(http, cuenta, ua), cuenta, ua,
+            OpcionesComprobacion(esperaEntrePruebasMs = espera, formato = formato))
+        val (res, parada) = c.comprobar(streamIds, cancelado) { i, r ->
+            _progreso.value = "Comprobando ${i + 1} de ${streamIds.size}…"
+            runBlocking { dao.guardarResultado(ResultadoEnlaceEntidad(r.streamId, r.estado.name, r.msPrimerDato, r.kbps, r.bytes, r.fecha, r.detalle)) }
+        }
+        _progreso.value = null
+        recalcular()
+        val resumen = "Probados ${res.size}: ${res.count { it.estado == EstadoEnlace.FUNCIONA }} funcionan, " +
+            "${res.count { it.estado == EstadoEnlace.LENTO }} lentos, ${res.count { it.estado == EstadoEnlace.FALLA }} fallan"
+        when (parada) {
+            Parada.ConexionAjena -> "$resumen. Detenido: hay otra conexión en uso (active_cons > 0)."
+            Parada.Cancelada -> "$resumen. Cancelado."
+            null -> resumen
+        }
+    }
+
+    suspend fun borrarResultadosEnlaces() { dao.borrarResultados(); recalcular() }
+
+    // ---------- Subida a un servidor propio ----------
+
+    suspend fun subirLista(exportador: Exportador): String = withContext(Dispatchers.IO) {
+        val (url, u, p) = credenciales.leerSubida() ?: return@withContext "Configura antes la dirección de subida"
+        try {
+            val archivos = exportador.generar()
+            val subidor = Subidor(http)
+            archivos.forEach { subidor.subir(url, it.nombre, it.contenido, u, p) }
+            "Subidos: " + archivos.joinToString { it.nombre }
+        } catch (e: Exception) {
+            "Error al subir: " + Redactor.redactar(e.message ?: e.javaClass.simpleName, cuentaEfectiva())
         }
     }
 

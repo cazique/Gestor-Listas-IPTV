@@ -11,6 +11,9 @@
     <!-- Autoactualización con PackageInstaller (sección 6.4.4) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Servidor local opcional (sección 7.2): servicio en primer plano de tipo specialUse -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <application
         android:name=".IptvGestorApp"
@@ -37,6 +40,15 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".servidor.ServicioServidor"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Servidor HTTP local, iniciado por el usuario, que entrega la lista M3U generada a un reproductor IPTV del mismo dispositivo o de la red local" />
+        </service>
 
         <receiver
             android:name=".actualizacion.ReceptorInstalacion"

@@ -91,6 +91,13 @@ class DecisionesTest {
         assertTrue(BandejaRevision.casos(r, listOf(ign)).none { it.tipo == TipoCaso.SIN_GUIA && it.clave == "XYZ RARO" })
     }
 
+    @Test fun ordenarPorTasaMedida() {
+        val r = Motor(ConfigMotor(ordenarPorTasa = true)).procesar(base, cats, epg, tasas = mapOf(10L to 8000L, 11L to 3000L))
+        assertEquals(10L, r.canales.first { it.clave == "LA 1" && it.ambito == "M+" }.variantes.first().stream.streamId)
+        val r2 = Motor().procesar(base, cats, epg, tasas = mapOf(10L to 8000L, 11L to 3000L))
+        assertEquals(11L, r2.canales.first { it.clave == "LA 1" && it.ambito == "M+" }.variantes.first().stream.streamId) // RAW por etiqueta
+    }
+
     @Test fun cambios() {
         val a = listOf(Instantanea(1, "LA 1", "G", "i"), Instantanea(2, "LA 2", "G", "i"), Instantanea(3, "TRES", "G", "i"))
         val d = listOf(Instantanea(1, "LA 1 HD", "G", "i"), Instantanea(30, "TRES", "G", "j"), Instantanea(4, "NUEVO", "G", "i"))

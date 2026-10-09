@@ -27,12 +27,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.cazique.iptvgestor.core.EntradaLista
 import es.cazique.iptvgestor.core.Normalizacion
+import kotlinx.coroutines.launch
 
 enum class FiltroLista(val texto: String) { TODOS("Todos"), SIN_GUIA("Sin guía"), MANUALES("Decididos a mano"), CON_GUIA("Con guía") }
 
 /** Vista previa de la lista final, en el orden de exportación (sección 6.2.3). */
 @Composable
 fun PantallaLista() {
+    PantallaListaInterna()
+}
+
+@Composable
+private fun PantallaListaInterna() {
     val app = LocalApp.current
     val nav = LocalNav.current
     val tv = LocalTv.current
@@ -41,7 +47,12 @@ fun PantallaLista() {
     var filtro by rememberSaveable { mutableStateOf(FiltroLista.TODOS) }
     var grupo by rememberSaveable { mutableStateOf<String?>(null) }
 
-    val lista = resultado?.lista.orEmpty()
+    val prefs by app.ajustes.datos.collectAsState(initial = null)
+    val desbloqueado by ControlParental.desbloqueado.collectAsState()
+    val bloquear = (prefs?.get(es.cazique.iptvgestor.datos.Ajustes.K.PIN_ACTIVO) ?: true) && !desbloqueado
+    var pidiendoPin by remember { mutableStateOf(false) }
+    val todas = resultado?.lista.orEmpty()
+    val lista = remember(todas, bloquear) { if (bloquear) todas.filterNot { it.canal.adulto } else todas }
     val grupos = remember(lista) { lista.map { it.grupoSalida }.distinct() }
     val filtrada = remember(lista, q, filtro, grupo) {
         val qq = Normalizacion.clave(q)
@@ -69,6 +80,9 @@ fun PantallaLista() {
                 grupos.take(60).forEach { g -> FilterChip(selected = g == grupo, onClick = { grupo = g }, label = { Text(g, maxLines = 1) }) }
             }
         }
+        if (bloquear && todas.size != lista.size) {
+            FilaFoco(onClick = { pidiendoPin = true }) { Text("🔒 ${todas.size - lista.size} canales para adultos ocultos. Toca para desbloquear con el PIN.") }
+        }
         if (lista.isEmpty()) Text("Todavía no hay datos. Sincroniza desde Resumen o importa archivos en Cuenta.")
         LazyColumn(Modifier.fillMaxSize().testTag("lista")) {
             var anterior: String? = null
@@ -91,6 +105,16 @@ fun PantallaLista() {
                         }
                     }
                 }
+            }
+        }
+    }
+    if (pidiendoPin) {
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
+        DialogoPin("PIN parental", { pidiendoPin = false }) { pin ->
+            pidiendoPin = false
+            scope.launch {
+                val h = app.ajustes.leer(es.cazique.iptvgestor.datos.Ajustes.K.PIN_HASH)
+                if (h != null && es.cazique.iptvgestor.core.Pin.verificar(pin, h)) ControlParental.desbloqueado.value = true
             }
         }
     }

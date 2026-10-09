@@ -44,6 +44,7 @@ fun PantallaFicha(ambito: String, clave: String) {
     val repo = app.repositorio
     val nav = LocalNav.current
     val resultado by repo.resultado.collectAsState()
+    val enlaces by repo.resultadosEnlaces.collectAsState(initial = emptyMap())
     val scope = rememberCoroutineScope()
     var dialogo by remember { mutableStateOf(Dialogo.NINGUNO) }
     var variante by remember { mutableStateOf<Variante?>(null) }
@@ -88,6 +89,11 @@ fun PantallaFicha(ambito: String, clave: String) {
                 Text("Grupo: ${v.grupo} · calidad ${Normalizacion.PERFIL_NORMAL.getOrElse(v.puntos % 10) { "?" }}" +
                     (if (v.puntos >= 10) " (solo eventos/HDR)" else "") + (if (v.respaldo) " · BK" else "") + " · id ${v.stream.streamId}",
                     style = MaterialTheme.typography.bodySmall)
+                enlaces[v.stream.streamId]?.let { e ->
+                    Text("Comprobado: ${e.estado.name.lowercase()}" + (e.kbps?.let { k -> " · ${k} kbps" } ?: "") +
+                        (e.msPrimerDato?.let { m -> " · primer dato en $m ms" } ?: "") + (if (e.detalle.isNotEmpty()) " · ${e.detalle}" else ""),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!v.preferida) BotonSecundario("Preferida") { decidir(decisionVariante(v, TipoDecision.PREFERIDA), "Variante preferida") }
                     BotonSecundario(if (v.oculta) "Mostrar" else "Ocultar") {
