@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El host del proveedor lo escribe el usuario: no se puede usar domain-config.
+     La app intenta HTTPS primero y solo usa HTTP con consentimiento explícito por host (DECISIONES.md). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

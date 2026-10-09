@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gestor IPTV</string>
+    <string name="version">Versión %1$s (código %2$d)</string>
+    <string name="buscar_actualizaciones">Buscar actualizaciones</string>
+    <string name="buscando">Buscando actualizaciones…</string>
+    <string name="al_dia">Tienes la última versión.</string>
+    <string name="hay_version">Versión nueva: %1$s</string>
+    <string name="actualizar">Descargar e instalar</string>
+    <string name="mas_tarde">Más tarde</string>
+    <string name="descargando">Descargando… %1$d %%</string>
+    <string name="verificando">Verificando el APK…</string>
+    <string name="instalando">Esperando la confirmación de Android…</string>
+    <string name="actualizada_a">Actualizada a la versión %1$s</string>
+    <string name="permiso_instalar_titulo">Permiso para instalar actualizaciones</string>
+    <string name="permiso_instalar_texto">Android necesita que actives «Instalar apps desconocidas» (o «Fuentes desconocidas» en Google TV) para esta app. Pulsa «Abrir ajustes», activa el permiso y vuelve con el botón Atrás. Solo hay que hacerlo una vez.</string>
+    <string name="abrir_ajustes">Abrir ajustes</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="aceptar">Aceptar</string>
+    <string name="canal_pruebas">Canal de pruebas (versiones preliminares)</string>
+    <string name="comprobar_auto">Buscar actualizaciones automáticamente</string>
+    <string name="nota_prueba">Nota de prueba (debe conservarse al actualizar)</string>
+    <string name="notif_canal">Actualizaciones</string>
+    <string name="notif_titulo">Hay una versión nueva de Gestor IPTV</string>
+    <string name="notif_texto">Versión %1$s disponible. Toca para instalarla.</string>
+    <string name="error">Error: %1$s</string>
+</resources>

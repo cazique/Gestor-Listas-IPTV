@@ -1,0 +1,17 @@
+#EXTM3U url-tvg="https://raw.githubusercontent.com/davidmuma/EPG_dobleM/master/guiatv_sincolor.xml.gz" x-tvg-url="https://raw.githubusercontent.com/davidmuma/EPG_dobleM/master/guiatv_sincolor.xml.gz"
+#EXTINF:-1 tvg-id="La 1 HD" tvg-name="LA 1" tvg-logo="https://raw.githubusercontent.com/davidmuma/picons_dobleM/master/icon/La%201.png" group-title="Prueba A",P1 La 1 (grupo A, entrada 1)
+http://127.0.0.1:9/p1.ts
+#EXTINF:-1 tvg-id="La 1 HD" tvg-name="LA 1" tvg-logo="https://raw.githubusercontent.com/davidmuma/picons_dobleM/master/icon/La%201.png" group-title="Prueba B",P2 La 1 (grupo B, mismo tvg-id)
+http://127.0.0.1:9/p2.ts
+#EXTINF:-1 tvg-id="La 1 HD" tvg-name="LA 1" tvg-logo="https://raw.githubusercontent.com/davidmuma/picons_dobleM/master/icon/La%201.png" group-title="Prueba A",P3 La 1 (grupo A, entrada 2, mismo tvg-id)
+http://127.0.0.1:9/p3.ts
+#EXTINF:-1 tvg-id="la 1 hd" tvg-name="LA 1" group-title="Prueba C",P4 La 1 con tvg-id en minusculas
+http://127.0.0.1:9/p4.ts
+#EXTINF:-1 tvg-id="La 2" tvg-chno="3" tvg-name="LA 2" group-title="Prueba D",P5 La 2 (tvg-chno 3, va primero en el archivo)
+http://127.0.0.1:9/p5.ts
+#EXTINF:-1 tvg-id="Antena 3 HD" tvg-chno="1" tvg-name="ANTENA 3" group-title="Prueba D",P6 Antena 3 (tvg-chno 1, va segundo)
+http://127.0.0.1:9/p6.ts
+#EXTINF:-1 tvg-id="Cuatro HD" tvg-chno="2" tvg-name="CUATRO" group-title="Prueba D",P7 Cuatro (tvg-chno 2, va tercero)
+http://127.0.0.1:9/p7.ts
+#EXTINF:-1 tvg-id="" tvg-name="Telecinco" group-title="Prueba E",P8 Telecinco sin tvg-id (solo tvg-name)
+http://127.0.0.1:9/p8.ts
