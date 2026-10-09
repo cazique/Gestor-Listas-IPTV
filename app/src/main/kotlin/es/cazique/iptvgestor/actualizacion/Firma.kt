@@ -22,14 +22,21 @@ object Firma {
 
     fun deApk(context: Context, ruta: String): Pair<String?, Set<String>> {
         val pm = context.packageManager
-        val info = if (Build.VERSION.SDK_INT >= 28) {
-            pm.getPackageArchiveInfo(ruta, PackageManager.GET_SIGNING_CERTIFICATES)
-        } else {
-            @Suppress("DEPRECATION")
-            pm.getPackageArchiveInfo(ruta, PackageManager.GET_SIGNATURES)
-        } ?: return null to emptySet()
-        return info.packageName to huellas(info)
+        if (Build.VERSION.SDK_INT >= 28) {
+            val info = pm.getPackageArchiveInfo(ruta, PackageManager.GET_SIGNING_CERTIFICATES)
+            val h = info?.let(::huellas).orEmpty()
+            if (info != null && h.isNotEmpty()) return info.packageName to h
+        }
+        // Respaldo: en algunas versiones signingInfo de un archivo viene vacío; GET_SIGNATURES sí lo lee.
+        @Suppress("DEPRECATION")
+        val info = pm.getPackageArchiveInfo(ruta, PackageManager.GET_SIGNATURES) ?: return null to emptySet()
+        @Suppress("DEPRECATION")
+        val firmas = info.signatures ?: emptyArray()
+        return info.packageName to firmas.map { sha(it) }.toSet()
     }
+
+    private fun sha(s: Signature): String =
+        MessageDigest.getInstance("SHA-256").digest(s.toByteArray()).joinToString("") { "%02x".format(it) }
 
     private fun huellas(info: PackageInfo): Set<String> {
         val firmas: Array<Signature> = if (Build.VERSION.SDK_INT >= 28) {
@@ -38,8 +45,6 @@ object Firma {
             @Suppress("DEPRECATION")
             info.signatures ?: emptyArray()
         }
-        return firmas.map { s ->
-            MessageDigest.getInstance("SHA-256").digest(s.toByteArray()).joinToString("") { "%02x".format(it) }
-        }.toSet()
+        return firmas.map(::sha).toSet()
     }
 }

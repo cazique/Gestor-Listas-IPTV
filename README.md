@@ -124,7 +124,7 @@ JDK 17 o posterior y Android SDK con la plataforma 37. El APK de release sale si
 
 Lo que **no** se ha podido comprobar desde el entorno de desarrollo (sin Android SDK local, sin emulador y sin acceso al proveedor). Todo lo demás está verificado por GitHub Actions (compilación debug y release, pruebas unitarias y de interfaz con Robolectric y lint).
 
-1. **Firma y publicación del Release.** No se pudieron crear los secretos desde aquí. Pasos: sección 1.1 y 1.2. Comprueba en *Actions* que «Firmar y publicar Release» termina en verde y que el Release trae los tres archivos.
+1. ~~Firma y publicación del Release~~ **Verificado el 9-10-2026:** el Release `v0.4.9` se publicó con `app-release.apk`, `update.json` y `SHA256SUMS`; el SHA-256 coincide con `update.json` y el certificado es `CN=Gestor IPTV, O=cazique, C=ES` (SHA-256 `53:1D:D1:72:…:0E:F9`).
 2. **Actualización de extremo a extremo** (instalar N, publicar N+1, actualizar desde la app conservando ajustes y decisiones). Pasos: sección 2.
 3. **Pantalla «Instalar apps desconocidas» en tu Google TV**: si la app no puede abrirla directamente, abre la de Seguridad; comprueba que puedes activarla con el mando.
 4. **Primera sincronización real** con tu proveedor (la API se ha probado con datos simulados y con los fixtures). Comprueba que las cifras del Resumen se parecen a las de referencia: M+ 201 canales (capas 201/80/57/29/15), Vodafone 140 (140/48/1), Orange 146 (146/2); con guía, M+ 136, Vodafone 87 y Orange 109.
