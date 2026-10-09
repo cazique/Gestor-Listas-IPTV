@@ -5,7 +5,9 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
@@ -49,6 +51,8 @@ class InterfazTest {
         compose.onNodeWithTag("nav_LISTA").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Vista previa", substring = true).assertExists()
+        // La lista es perezosa: se desplaza hasta el canal antes de pulsarlo.
+        compose.onNodeWithTag("lista").performScrollToNode(hasText("CANAL INVENTADO"))
         compose.onNodeWithText("CANAL INVENTADO").performClick()
         compose.onNodeWithText("Variantes", substring = true).assertExists()
         compose.onNodeWithText("Asignar guía").assertExists()
@@ -59,6 +63,7 @@ class InterfazTest {
         compose.onNodeWithTag("nav_REVISAR").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Por revisar", substring = true).assertExists()
+        compose.onNodeWithTag("casos").performScrollToNode(hasText("CANAL INVENTADO (M+) no tiene guía", substring = true))
         compose.onNodeWithText("CANAL INVENTADO (M+) no tiene guía", substring = true).assertExists()
     }
 

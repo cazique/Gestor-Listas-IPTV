@@ -124,7 +124,7 @@ fun PantallaRevisar() {
                     onSiguiente = { saltar() })
             }
         } else {
-            LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(Modifier.fillMaxSize().testTag("casos"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(visibles, key = { it.id }) { caso ->
                     TarjetaCaso(caso, Modifier,
                         onConfirmar = { confirmar(caso) },
