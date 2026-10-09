@@ -15,16 +15,23 @@ adb logcat -d -b crash > "salida-emulador/fallos-$nombre.txt" || true
 adb logcat -d > "salida-emulador/logcat-$nombre.txt" || true
 adb exec-out screencap -p > "salida-emulador/captura-$nombre.png" || true
 if adb shell pidof es.cazique.iptvgestor >/dev/null; then vivo=1; else vivo=0; fi
+# Pruebas instrumentadas (motor con fixtures sobre ICU), solo en el emulador de móvil.
+instr=0
+if [ "$nombre" = "movil" ]; then
+  ./gradlew connectedDebugAndroidTest --stacktrace > "salida-emulador/instrumentadas.txt" 2>&1 || instr=1
+  tail -40 "salida-emulador/instrumentadas.txt"
+  cp -r app/build/reports/androidTests salida-emulador/ 2>/dev/null || true
+fi
 echo "== Fallos registrados ($nombre):"
 cat "salida-emulador/fallos-$nombre.txt"
 # Errores que la app capturó (tareas de fondo) sin llegar a cerrarse: también cuentan como fallo.
 grep -A30 "IptvGestorFallo" "salida-emulador/logcat-$nombre.txt" > "salida-emulador/errores-app-$nombre.txt" || true
 cat "salida-emulador/errores-app-$nombre.txt"
 if [ "$vivo" = 1 ] && ! grep -q "es.cazique.iptvgestor" "salida-emulador/fallos-$nombre.txt" \
-   && [ ! -s "salida-emulador/errores-app-$nombre.txt" ]; then
+   && [ ! -s "salida-emulador/errores-app-$nombre.txt" ] && [ "$instr" = 0 ]; then
   echo "La app sigue abierta tras 25 s: OK"
 else
-  echo "::error::La app se ha cerrado en el emulador ($nombre)"
+  echo "::error::Fallo en el emulador ($nombre): vivo=$vivo, pruebas instrumentadas=$instr"
   grep -A40 "FATAL EXCEPTION" "salida-emulador/logcat-$nombre.txt" | head -80 || true
   exit 1
 fi

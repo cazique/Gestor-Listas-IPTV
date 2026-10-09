@@ -33,3 +33,6 @@ alias_epg.txt
 
 __pycache__/
 *.pyc
+
+# Copia de los fixtures que CI pone en las pruebas instrumentadas
+app/src/androidTest/assets/

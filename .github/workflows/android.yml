@@ -98,6 +98,8 @@ jobs:
             api=${{ matrix.api }}; target=${{ matrix.target }}; arch=x86_64
           fi
           echo "api=$api" >> "$GITHUB_OUTPUT"; echo "target=$target" >> "$GITHUB_OUTPUT"; echo "arch=$arch" >> "$GITHUB_OUTPUT"
+      - name: Fixtures para las pruebas instrumentadas
+        run: mkdir -p app/src/androidTest/assets && cp fixtures/live.json fixtures/live_categorias.json app/src/androidTest/assets/
       - name: Habilitar KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

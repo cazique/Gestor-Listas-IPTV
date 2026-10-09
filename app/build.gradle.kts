@@ -114,4 +114,9 @@ dependencies {
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.room.testing)
+
+    // Pruebas instrumentadas (en emulador): el motor con los fixtures sobre el motor de regex ICU de Android.
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.junit)
 }
