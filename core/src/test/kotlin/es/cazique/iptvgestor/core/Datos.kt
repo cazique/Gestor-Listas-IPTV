@@ -22,13 +22,24 @@ object Datos {
             cache.parentFile.mkdirs()
             val c = URI(FuentesEpg.PREDETERMINADA).toURL().openConnection() as HttpURLConnection
             c.connectTimeout = 20000; c.readTimeout = 60000
-            c.inputStream.use { i -> cache.outputStream().use { i.copyTo(it) } }
+            // Descarga a un temporal y renombra: una descarga cortada no deja una caché corrupta.
+            val parcial = File(cache.parentFile, cache.name + ".part")
+            c.inputStream.use { i -> parcial.outputStream().use { i.copyTo(it) } }
+            parcial.renameTo(cache)
             cache
         } catch (e: Exception) {
             println("Guía no disponible (${e.javaClass.simpleName}); se omiten las pruebas que la necesitan")
             null
         }
-        archivo?.let { f -> GZIPInputStream(f.inputStream()).use { leerEpg(it) } }
+        archivo?.let { f ->
+            try {
+                GZIPInputStream(f.inputStream()).use { leerEpg(it) }
+            } catch (e: Exception) {
+                println("Guía ilegible (${e.javaClass.simpleName}); se omiten las pruebas que la necesitan")
+                f.delete()
+                null
+            }
+        }
     }
 
     fun leerEpg(input: java.io.InputStream): List<CanalEpg> {
