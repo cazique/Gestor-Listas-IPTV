@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## Fase 4 — VOD (gestión, sin reproducir)
+- Películas (`get_vod_streams`) y series (`get_series`, `get_series_info`), guardadas en archivos privados de la app.
+- Filtro por categorías (por defecto, las que empiezan por «ES»), duplicados por `tmdb` y, si falta, por título normalizado y año.
+- Adultos ocultos salvo desbloqueo con PIN; orden por valoración, fecha de alta o título.
+- M3U de películas independiente del de directos y M3U de episodios por serie; ocultar películas con el mismo sistema de decisiones.
+
 ## Fase 3 — Salida y utilidades
 - Servidor local opcional (Ktor CIO, servicio en primer plano `specialUse`): `/lista.m3u`, `/lista_<paquete>.m3u`, `/informe.txt`; solo 127.0.0.1 por defecto y ruta secreta en red local.
 - Subida a servidor propio por HTTP PUT/WebDAV (manual o tras cada sincronización), con credenciales cifradas.

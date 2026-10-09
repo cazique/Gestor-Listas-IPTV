@@ -50,6 +50,20 @@ class ClienteXtream(
     fun estado(): EstadoCuenta = EstadoCuenta.desdeJson(texto(null))
     fun categorias(): List<Categoria> = XtreamJson.categorias(texto("get_live_categories"))
     fun streams(): List<Stream> = XtreamJson.streams(texto("get_live_streams"))
+    fun vodCategorias(): String = texto("get_vod_categories")
+    fun vodStreams(): String = texto("get_vod_streams")
+    fun seriesCategorias(): String = texto("get_series_categories")
+    fun series(): String = texto("get_series")
+
+    fun infoSerie(id: Long): String {
+        val req = Request.Builder().url(url("get_series_info", mapOf("series_id" to id.toString()))).header("User-Agent", userAgent).build()
+        try {
+            http.newCall(req).execute().use { r ->
+                if (!r.isSuccessful) throw ErrorProveedor("El servidor respondió ${r.code}", r.code)
+                return r.body.string()
+            }
+        } catch (e: ErrorProveedor) { throw e } catch (e: IOException) { throw ErrorProveedor(Redactor.redactar(describir(e), cuenta)) }
+    }
 
     companion object {
         fun describir(e: Throwable): String = when (e) {

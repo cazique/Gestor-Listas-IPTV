@@ -100,3 +100,14 @@ Cifras de la lista final completa con los fixtures y la guía del 9-10-2026: 2.9
 | Opción «Ordenar las capas por tasa de bits medida» (desactivada): las variantes medidas van primero, de mayor a menor kbps; `SOLO EVENTOS`/`HDR` siguen al final | — | Sección 4.3 |
 | Bloqueo parental **activado por defecto** sin PIN: el contenido para adultos (`FOR ADULTS` e `is_adult = 1`) se oculta en la app hasta crear un PIN y desbloquear la sesión. PIN con PBKDF2-HMAC-SHA256, 120.000 iteraciones y sal aleatoria | SHA-256 simple | Sección 9 |
 | La lista exportada respeta el ajuste «Incluir canales para adultos» (activado por defecto) | — | Sección 6.2.9 |
+
+## Fase 4: VOD
+
+| Decisión | Alternativas | Motivo |
+|---|---|---|
+| Las respuestas de VOD se guardan como archivos JSON privados (`files/vod/`), escritos a temporales y renombrados al final | Tablas de Room | 67.389 películas no aportan nada a la base de datos de directos; evita otra migración. Todo o nada igualmente |
+| Categorías por defecto: las que empiezan por «ES» tras normalizar | Todas | Mismo criterio que los directos. Sin `vod.json` real no se ha podido analizar el formato de los títulos; el prefijo de idioma y el año se detectan con `MotorVod.claveTitulo` y se revisará con datos reales |
+| Duplicados: `tmdb` como clave principal; si falta, título normalizado (sin prefijo de idioma, calidades ni corchetes) + año | Solo nombre | Sección 13, Fase 4 |
+| Una entrada por título en el M3U de películas (la copia mejor valorada y, a igualdad, la más reciente) | Todas las copias | Lista limpia; las demás copias se ven en la app |
+| Series: M3U de episodios por serie, a petición (una llamada a `get_series_info` por serie) | Descargar todas las series | Evita miles de llamadas con una cuenta de conexión única |
+| Ocultar películas con la decisión `OCULTAR_PELICULA` (historial y deshacer comunes) | Lista aparte | «El mismo sistema de decisiones manuales» |

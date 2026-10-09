@@ -127,6 +127,7 @@ fun PantallaAjustes(abrirIntent: (Intent) -> Unit) {
         }
         Tarjeta {
             Text("Aplicación", style = MaterialTheme.typography.titleMedium)
+            FilaFoco(onClick = { nav.ir(Destino.Vod) }) { Text("Películas y series (VOD) →") }
             FilaFoco(onClick = { nav.ir(Destino.Utilidades) }) { Text("Servidor local, subida, comprobar enlaces y bloqueo parental →") }
             FilaFoco(onClick = { nav.ir(Destino.Actualizaciones) }) {
                 Text("Versión y actualizaciones", Modifier.weight(1f))

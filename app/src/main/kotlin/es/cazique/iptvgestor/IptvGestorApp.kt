@@ -32,6 +32,8 @@ class IptvGestorApp : Application(), Configuration.Provider {
         private set
     lateinit var exportador: Exportador
         private set
+    lateinit var vod: es.cazique.iptvgestor.datos.RepositorioVod
+        private set
     val alcance = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
@@ -45,6 +47,7 @@ class IptvGestorApp : Application(), Configuration.Provider {
         actualizaciones = GestorActualizaciones(this, http, ajustes)
         repositorio = Repositorio(this, http, ajustes, Credenciales(this), BaseDatos.crear(this))
         exportador = Exportador(this, repositorio)
+        vod = es.cazique.iptvgestor.datos.RepositorioVod(this, repositorio, http)
         crearCanalNotificaciones()
         TrabajoActualizacion.programar(this)
         alcance.launch {

@@ -18,6 +18,7 @@ enum class TipoDecision(val descripcion: String, val deVariante: Boolean) {
     ICONO("Cambiar icono", false),
     NO_DUPLICADO("No es duplicado", false),
     IGNORAR("Ignorar en revisión", false),
+    OCULTAR_PELICULA("Ocultar película", false),
 }
 
 /**
