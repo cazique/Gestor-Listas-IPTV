@@ -110,8 +110,8 @@ object MotorVod {
         var t = PREFIJO.replaceFirst(limpio, "")
         t = ANIO.replace(t, " ")
         t = Regex("\\[.*?]|\\(.*?\\)").replace(t, " ")
-        t = Regex("(?U)\\b(4K|UHD|FHD|HD|SD|HEVC|H265|VOSE|VOS|DUAL|LAT|CAST|ESP|MULTI)\\b").replace(t, " ")
-        t = Regex("(?U)[^\\w ]").replace(t, " ")
+        t = reU("\\b(4K|UHD|FHD|HD|SD|HEVC|H265|VOSE|VOS|DUAL|LAT|CAST|ESP|MULTI)\\b").replace(t, " ")
+        t = reU("[^\\w ]").replace(t, " ")
         return Regex("\\s+").replace(t, " ").trim() to anio
     }
 

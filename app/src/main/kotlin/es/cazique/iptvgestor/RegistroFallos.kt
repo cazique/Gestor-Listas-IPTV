@@ -2,6 +2,7 @@ package es.cazique.iptvgestor
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import es.cazique.iptvgestor.core.Redactor
 import java.io.File
 
@@ -11,6 +12,7 @@ import java.io.File
  */
 object RegistroFallos {
     private const val ARCHIVO = "ultimo_fallo.txt"
+    const val ETIQUETA = "IptvGestorFallo"
 
     fun instalar(context: Context) {
         val previo = Thread.getDefaultUncaughtExceptionHandler()
@@ -27,7 +29,10 @@ object RegistroFallos {
             appendLine("Dónde: $donde")
             appendLine(e.stackTraceToString())
         }
-        File(context.filesDir, ARCHIVO).writeText(Redactor.redactar(texto).take(20_000))
+        val redactado = Redactor.redactar(texto).take(20_000)
+        File(context.filesDir, ARCHIVO).writeText(redactado)
+        // También al registro del sistema (ya redactado): la prueba en emulador de CI lo busca.
+        Log.e(ETIQUETA, redactado)
     }
 
     fun leerYBorrar(context: Context): String? {

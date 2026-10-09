@@ -97,7 +97,7 @@ class Emparejador(
 ) {
     private val indice = LinkedHashMap<String, Int>()
     private val comp = LinkedHashMap<String, Int>()
-    private val sinonimos = alias.sinonimos.map { (a, b) -> Regex("(?U)\\b${Regex.escape(a)}\\b") to b }
+    private val sinonimos = alias.sinonimos.map { (a, b) -> reU("\\b${Regex.escape(a)}\\b") to b }
     private val porId = epg.associateBy { it.id }
 
     init {
