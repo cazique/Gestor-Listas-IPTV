@@ -64,8 +64,8 @@ jobs:
             api: 35
             target: google_apis
           - nombre: tv
-            api: 34
-            target: android-tv
+            api: auto
+            target: auto
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -85,6 +85,19 @@ jobs:
             -validity 2 -dname "CN=Prueba" -storepass prueba123 -keypass prueba123
           "$bt/zipalign" -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/alineado.apk"
           "$bt/apksigner" sign --ks "$RUNNER_TEMP/prueba.jks" --ks-pass pass:prueba123 --out "$RUNNER_TEMP/app-prueba.apk" "$RUNNER_TEMP/alineado.apk"
+      - name: Elegir la imagen del emulador
+        id: imagen
+        run: |
+          if [ "${{ matrix.api }}" = "auto" ]; then
+            # La imagen de TV más reciente disponible (android-tv o google-tv, x86/x86_64).
+            linea=$("$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list 2>/dev/null \
+              | grep -oE 'system-images;android-[0-9]+;(android-tv|google-tv);x86(_64)?' | sort -u -t';' -k2,2V | tail -1)
+            echo "Imagen de TV: $linea"
+            api=$(echo "$linea" | cut -d';' -f2 | sed 's/android-//'); target=$(echo "$linea" | cut -d';' -f3); arch=$(echo "$linea" | cut -d';' -f4)
+          else
+            api=${{ matrix.api }}; target=${{ matrix.target }}; arch=x86_64
+          fi
+          echo "api=$api" >> "$GITHUB_OUTPUT"; echo "target=$target" >> "$GITHUB_OUTPUT"; echo "arch=$arch" >> "$GITHUB_OUTPUT"
       - name: Habilitar KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -93,9 +106,9 @@ jobs:
       - name: Abrir la app en el emulador
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: ${{ matrix.api }}
-          target: ${{ matrix.target }}
-          arch: x86_64
+          api-level: ${{ steps.imagen.outputs.api }}
+          target: ${{ steps.imagen.outputs.target }}
+          arch: ${{ steps.imagen.outputs.arch }}
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: tools/ci_emulador.sh "$RUNNER_TEMP/app-prueba.apk" ${{ matrix.nombre }}
