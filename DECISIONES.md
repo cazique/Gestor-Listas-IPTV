@@ -77,7 +77,7 @@ Cifras de la lista final completa con los fixtures y la guía del 9-10-2026: 2.9
 | ETag e `If-None-Match` en la API; comprobación al abrir (≤ 1 vez cada 12 h), diaria con WorkManager y con el botón | Sección 6.4.4 |
 | Verificación: `versionCode` mayor, `minSdk`, SHA-256 de `update.json`, nombre de paquete y certificados idénticos a los de la app instalada | Sección 6.4.4 |
 | Instalación con `PackageInstaller` (sesión), confirmación abierta por la actividad visible | No hay instalación silenciosa para apps instaladas por sideload; `setRequireUserAction(NOT_REQUIRED)` solo vale si la app es la instaladora de registro (no es el caso: la instala el navegador), así que no se usa |
-| Publicación: en push a la rama principal del repositorio (`master`) o manual (`workflow_dispatch`, con opción de preliminar). Sin secretos, el trabajo avisa y no publica (no falla) | Secretos nunca en pull requests ni forks |
+| Publicación: en push a la rama principal del repositorio, a la rama de trabajo `ccr-dc368e82-x0lki4` (donde está todo el proyecto, porque `master` conserva el código antiguo) o manual (`workflow_dispatch`, con opción de preliminar). Sin secretos, el trabajo avisa y no publica (no falla) | Secretos nunca en pull requests ni forks |
 | Release creado con `gh release create` (preinstalado en los runners) | Sin acciones de terceros con permiso de escritura |
 
 ## Seguridad
