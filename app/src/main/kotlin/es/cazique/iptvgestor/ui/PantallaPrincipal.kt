@@ -58,10 +58,11 @@ fun PantallaPrincipal(app: IptvGestorApp, tv: Boolean, buscarAlAbrir: Boolean, a
     var notaEditada by remember(nota) { mutableStateOf(nota) }
     val scope = rememberCoroutineScope()
     val foco = remember { FocusRequester() }
+    val nav = LocalNav.current
 
     LaunchedEffect(Unit) {
         actualizadaA = gestor.versionRecienActualizada()
-        if (buscarAlAbrir) gestor.comprobar() else gestor.comprobarSiToca()
+        if (buscarAlAbrir && gestor.estado.value !is EstadoActualizacion.Disponible) gestor.comprobar()
         if (tv) runCatching { foco.requestFocus() }
     }
 
@@ -70,7 +71,7 @@ fun PantallaPrincipal(app: IptvGestorApp, tv: Boolean, buscarAlAbrir: Boolean, a
             Modifier.safeDrawingPadding().verticalScroll(rememberScrollState()).padding(if (tv) 48.dp else 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
+            Cabecera(stringResource(R.string.app_name), LocalNav.current.pila.size > 1) { nav.atras() }
             Text(
                 stringResource(R.string.version, gestor.versionName, gestor.versionCode),
                 modifier = Modifier.testTag("version"),

@@ -8,6 +8,15 @@ import androidx.work.WorkManager
 import es.cazique.iptvgestor.actualizacion.GestorActualizaciones
 import es.cazique.iptvgestor.actualizacion.TrabajoActualizacion
 import es.cazique.iptvgestor.datos.Ajustes
+import es.cazique.iptvgestor.datos.Credenciales
+import es.cazique.iptvgestor.datos.Exportador
+import es.cazique.iptvgestor.datos.Repositorio
+import es.cazique.iptvgestor.datos.TrabajoSincronizacion
+import es.cazique.iptvgestor.datos.bd.BaseDatos
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
@@ -20,6 +29,11 @@ class IptvGestorApp : Application() {
         private set
     lateinit var actualizaciones: GestorActualizaciones
         private set
+    lateinit var repositorio: Repositorio
+        private set
+    lateinit var exportador: Exportador
+        private set
+    val alcance = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
@@ -30,9 +44,19 @@ class IptvGestorApp : Application() {
             .readTimeout(120, TimeUnit.SECONDS)
             .build()
         actualizaciones = GestorActualizaciones(this, http, ajustes)
+        repositorio = Repositorio(this, http, ajustes, Credenciales(this), BaseDatos.crear(this))
+        exportador = Exportador(this, repositorio)
         WorkManager.initialize(this, Configuration.Builder().build())
         crearCanalNotificaciones()
         TrabajoActualizacion.programar(this)
+        alcance.launch {
+            TrabajoSincronizacion.programar(
+                this@IptvGestorApp,
+                ajustes.leer(Ajustes.K.HORAS_SINCRONIZACION) ?: 6,
+                ajustes.leer(Ajustes.K.SINCRONIZAR_AUTO) ?: true,
+            )
+            repositorio.recalcular()
+        }
     }
 
     private fun crearCanalNotificaciones() {

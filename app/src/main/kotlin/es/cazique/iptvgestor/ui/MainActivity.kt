@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
         val buscarAhora = intent?.getBooleanExtra(EXTRA_BUSCAR, false) == true
         setContent {
             TemaApp(tv) {
-                PantallaPrincipal(app, tv, buscarAhora, abrirIntent = { startActivity(it) })
+                AppRaiz(app, tv, buscarAhora, abrirIntent = { runCatching { startActivity(it) } })
             }
         }
     }
