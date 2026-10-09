@@ -11,36 +11,30 @@ Ni el repositorio ni el APK contienen tus credenciales, las del proveedor ni la 
 
 ## 1. Puesta en marcha (una sola vez)
 
-### 1.1 Crear los cuatro secretos de firma
+### 1.1 Crear los secretos de firma (basta con dos)
 
-La app se firma siempre con la misma clave, que vive **solo** en los secretos de GitHub Actions. Desde el navegador del móvil:
-
-1. En el repositorio: **Settings → Secrets and variables → Actions → New repository secret**.
-2. Crea estos cuatro secretos, con los valores que te dio Claude Code en el chat (una sola vez):
+La app se firma siempre con la misma clave, que vive **solo** en los secretos de GitHub Actions. Desde el navegador del móvil, en **Settings → Secrets and variables → Actions → New repository secret**, crea:
 
 | Nombre | Valor |
 |---|---|
-| `KEYSTORE_BASE64` | El almacén de claves codificado en base64 (un texto largo) |
+| `KEYSTORE_BASE64` | El almacén de claves codificado en base64 (un texto largo que te dio Claude Code una sola vez) |
 | `KEYSTORE_PASSWORD` | La contraseña del almacén |
-| `KEY_ALIAS` | `iptvgestor` |
-| `KEY_PASSWORD` | La misma contraseña que `KEYSTORE_PASSWORD` (PKCS12 usa una sola) |
+| `KEY_ALIAS` *(opcional)* | `iptvgestor` (es el valor por defecto) |
+| `KEY_PASSWORD` *(opcional)* | Por defecto, la misma que `KEYSTORE_PASSWORD` |
 
-Guarda también esos valores **fuera del chat** (por ejemplo, en un gestor de contraseñas). Los secretos de GitHub no se pueden volver a leer.
+Guarda también esos valores **fuera del chat** (por ejemplo, en un gestor de contraseñas). GitHub no deja volver a leer los secretos.
 
-### 1.2 Llevar el código a la rama principal (publica el primer Release)
+### 1.2 Cuándo se publica un Release
 
-El trabajo está en la rama `ccr-dc368e82-x0lki4`. Para publicar:
+El proyecto está en la rama `ccr-dc368e82-x0lki4` (`master` conserva el código antiguo de rclone-web). Cada push a esa rama, o a la rama principal del repositorio, compila, prueba, **firma y publica** un Release `v0.<fase>.<n>` con `app-release.apk`, `update.json` y `SHA256SUMS` (unos 12 minutos en total).
 
-1. En la portada del repositorio pulsa **Compare & pull request** (o *Pull requests → New pull request*).
-2. **Importante, porque el repositorio es un fork:** en *base repository* elige **tu** repositorio (`cazique/…`), no `poundifdef/rclone-web`. Base: `master`; compare: `ccr-dc368e82-x0lki4`.
-3. **Create pull request** y después **Merge pull request**.
-4. En **Actions → Android** verás la ejecución: el trabajo «Firmar y publicar Release» crea el Release `v0.1.N` con `app-release.apk`, `update.json` y `SHA256SUMS`.
-
-Si falta algún secreto, ese trabajo termina con un aviso («Faltan los secretos de firma») y no publica nada.
+- **Recomendado:** en *Settings → General → Default branch*, pon `ccr-dc368e82-x0lki4` como rama principal. Así la portada del repositorio muestra el proyecto y no el código antiguo.
+- **El repositorio es un fork:** si alguna vez creas un pull request, en *base repository* elige **tu** repositorio, no `poundifdef/rclone-web`.
+- Si falta algún secreto, el trabajo «Firmar y publicar Release» termina con un aviso y no publica nada.
 
 ### 1.3 Publicar otra versión a mano
 
-**Actions → Android → Run workflow** (rama `master`). Cada ejecución tiene un número mayor, así que produce un `versionCode` mayor. Marca «preliminar» para publicarla solo en el canal de pruebas.
+**Actions → Android → Run workflow** (elige la rama `ccr-dc368e82-x0lki4`). Cada ejecución tiene un número mayor, así que produce un `versionCode` mayor. Marca «preliminar» para publicarla solo en el canal de pruebas.
 
 ---
 
