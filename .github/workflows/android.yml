@@ -45,6 +45,7 @@ jobs:
             app/build/outputs/apk/debug/*.apk
             app/build/reports/
             core/build/reports/
+            app/schemas/
           if-no-files-found: ignore
           retention-days: 14
 
@@ -76,8 +77,9 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
-            echo "::warning::Faltan los secretos de firma (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD). No se publica. Ver README.md."
+          # KEY_ALIAS y KEY_PASSWORD son opcionales: por defecto "iptvgestor" y la misma contraseña del almacén.
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::warning::Faltan los secretos de firma (al menos KEYSTORE_BASE64 y KEYSTORE_PASSWORD). No se publica. Ver README.md."
             echo "hay=false" >> "$GITHUB_OUTPUT"
           else
             echo "hay=true" >> "$GITHUB_OUTPUT"
@@ -100,8 +102,8 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS || 'iptvgestor' }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.KEYSTORE_PASSWORD }}
         run: tools/ci_firmar.sh app/build/outputs/apk/release/app-release-unsigned.apk salida/app-release.apk
       - name: update.json, SHA256SUMS y notas
         if: steps.secretos.outputs.hay == 'true'
