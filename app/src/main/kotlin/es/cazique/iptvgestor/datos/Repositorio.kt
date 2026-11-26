@@ -94,7 +94,16 @@ class Repositorio(
 
     // ---------- Conexión (HTTPS primero, sección 9) ----------
 
-    suspend fun probarConexion(cuenta: Cuenta, permitirHttp: Boolean = false): ResultadoConexion = withContext(Dispatchers.IO) {
+    suspend fun probarConexion(cuenta: Cuenta, permitirHttp: Boolean = false): ResultadoConexion =
+        probarConexionInterna(cuenta, permitirHttp).also { r ->
+            when (r) {
+                is ResultadoConexion.Ok -> RegistroActividad.info("Conexión correcta (${if (r.https) "HTTPS" else "HTTP"}) · estado ${r.estado.estado} · conexiones ${r.estado.conexionesActivas ?: "?"}/${r.estado.conexionesMaximas ?: "?"}")
+                is ResultadoConexion.NecesitaHttp -> RegistroActividad.aviso("HTTPS no disponible: se pide permiso para usar HTTP")
+                is ResultadoConexion.Error -> RegistroActividad.error("Conexión fallida: ${r.mensaje}")
+            }
+        }
+
+    private suspend fun probarConexionInterna(cuenta: Cuenta, permitirHttp: Boolean): ResultadoConexion = withContext(Dispatchers.IO) {
         val ua = ajustes.leer(Ajustes.K.USER_AGENT) ?: UA_PREDETERMINADO
         val hostClave = PoliticaHttps.clave(cuenta.host)
         val consentidos = ajustes.leer(Ajustes.K.HOSTS_HTTP_PERMITIDOS) ?: emptySet()
@@ -133,9 +142,19 @@ class Repositorio(
         }
     }
 
-    suspend fun guardarCuenta(cuenta: Cuenta, baseEfectiva: String) {
+    /** Guarda la cuenta, comprueba que se puede volver a leer y borra el estado de error antiguo. */
+    suspend fun guardarCuenta(cuenta: Cuenta, baseEfectiva: String): Boolean {
         credenciales.guardar(cuenta)
         ajustes.guardar(Ajustes.K.URL_EFECTIVA, baseEfectiva)
+        val leida = credenciales.leer()
+        val ok = leida != null && leida.usuario == cuenta.usuario && leida.contrasena == cuenta.contrasena && leida.host == cuenta.host
+        if (ok) {
+            RegistroActividad.info("Cuenta guardada y comprobada · dirección efectiva $baseEfectiva")
+            ajustes.guardar(Ajustes.K.ESTADO_SINCRONIZACION, "cuenta nueva: sin sincronizar")
+        } else {
+            RegistroActividad.error("La cuenta se guardó pero no se puede volver a leer (cifrado del móvil)")
+        }
+        return ok
     }
 
     /** Cuenta con la dirección efectiva (HTTPS si se pudo) para la API y la lista exportada. */
@@ -151,34 +170,63 @@ class Repositorio(
 
     // ---------- Sincronización ----------
 
-    suspend fun sincronizar(): ResumenSincronizacion = mutex.withLock {
-        withContext(Dispatchers.IO) {
-            try {
-                val cuenta = cuentaEfectiva() ?: return@withContext ResumenSincronizacion(null, "Falta configurar la cuenta")
-                val ua = ajustes.leer(Ajustes.K.USER_AGENT) ?: UA_PREDETERMINADO
-                RegistroActividad.info("Sincronización: servidor ${cuenta.base} · User-Agent $ua")
-                val cliente = ClienteXtream(http, cuenta, ua)
-                _progreso.value = "Descargando categorías…"
-                val categorias = cliente.categorias()
-                _progreso.value = "Descargando canales…"
-                val streams = cliente.streams()
-                if (streams.isEmpty() || categorias.isEmpty()) throw IOException("El proveedor devolvió una lista vacía")
-                runCatching { if (epgAntigua()) actualizarEpgSinBloqueo() }
-                RegistroActividad.info("Recibidas ${categorias.size} categorías y ${streams.size} canales")
-                val informe = guardarProveedor(categorias, streams)
-                RegistroActividad.info("Sincronización correcta: ${informe.anadidos.size} añadidos, ${informe.quitados.size} quitados, ${informe.cambiados.size} cambiados")
-                ajustes.guardar(Ajustes.K.ULTIMA_SINCRONIZACION, System.currentTimeMillis())
-                ajustes.guardar(Ajustes.K.ESTADO_SINCRONIZACION, "ok")
-                ResumenSincronizacion(informe, null)
-            } catch (e: Exception) {
-                val cuenta = credenciales.leer()
-                val msg = Redactor.redactar(e.message ?: e.javaClass.simpleName, cuenta)
-                RegistroActividad.error("Sincronización fallida: $msg")
-                ajustes.guardar(Ajustes.K.ESTADO_SINCRONIZACION, "error: $msg")
-                ResumenSincronizacion(null, msg)
-            } finally {
-                _progreso.value = null
+    suspend fun sincronizar(): ResumenSincronizacion {
+        RegistroActividad.info("Sincronizar: pedido")
+        if (mutex.isLocked) RegistroActividad.info("Sincronizar: esperando a que termine otra operación en curso…")
+        return mutex.withLock { withContext(Dispatchers.IO) { sincronizarSinBloqueo() } }
+    }
+
+    private suspend fun fallo(mensaje: String): ResumenSincronizacion {
+        RegistroActividad.error("Sincronización fallida: $mensaje")
+        ajustes.guardar(Ajustes.K.ESTADO_SINCRONIZACION, "error: $mensaje")
+        return ResumenSincronizacion(null, mensaje)
+    }
+
+    private suspend fun sincronizarSinBloqueo(): ResumenSincronizacion {
+        val t0 = System.currentTimeMillis()
+        try {
+            _progreso.value = "Leyendo la cuenta…"
+            val guardada = credenciales.leer()
+            if (guardada == null) {
+                return fallo(if (credenciales.hayDatos()) "La cuenta guardada no se puede leer (cifrado del móvil). Vuelve a introducirla en Ajustes → Cuenta."
+                else "No hay cuenta guardada. Ve a Ajustes → Cuenta y pulsa «Probar conexión y guardar».")
             }
+            val cuenta = cuentaEfectiva() ?: return fallo("No hay cuenta guardada")
+            val ua = ajustes.leer(Ajustes.K.USER_AGENT) ?: UA_PREDETERMINADO
+            RegistroActividad.info("Sincronización: servidor ${cuenta.base} · User-Agent $ua")
+            val cliente = ClienteXtream(http, cuenta, ua)
+            _progreso.value = "Descargando categorías…"
+            RegistroActividad.info("Pidiendo categorías (get_live_categories)…")
+            val categorias = cliente.categorias()
+            RegistroActividad.info("Recibidas ${categorias.size} categorías")
+            _progreso.value = "Descargando canales…"
+            RegistroActividad.info("Pidiendo canales (get_live_streams)…")
+            val streams = cliente.streams()
+            RegistroActividad.info("Recibidos ${streams.size} canales")
+            if (streams.isEmpty() || categorias.isEmpty()) return fallo("El proveedor devolvió una lista vacía (${categorias.size} categorías, ${streams.size} canales)")
+            if (epgAntigua()) {
+                RegistroActividad.info("La guía es antigua: se actualiza")
+                actualizarEpgSinBloqueo()?.let { RegistroActividad.aviso(it) }
+            }
+            _progreso.value = "Procesando canales…"
+            RegistroActividad.info("Guardando y procesando (filtro, capas, guía)…")
+            val informe = guardarProveedor(categorias, streams)
+            val r = _resultado.value
+            RegistroActividad.info("Sincronización correcta en ${(System.currentTimeMillis() - t0) / 1000} s: " +
+                "${informe.anadidos.size} añadidos, ${informe.quitados.size} quitados, ${informe.cambiados.size} cambiados · " +
+                "lista final ${r?.cifras?.entradasLista ?: 0} canales en ${r?.cifras?.gruposLista ?: 0} grupos")
+            ajustes.guardar(Ajustes.K.ULTIMA_SINCRONIZACION, System.currentTimeMillis())
+            ajustes.guardar(Ajustes.K.ESTADO_SINCRONIZACION, "ok")
+            return ResumenSincronizacion(informe, null)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            RegistroActividad.aviso("Sincronización interrumpida (se salió de la pantalla o se cerró la app)")
+            throw e
+        } catch (e: Throwable) {
+            val msg = Redactor.redactar(e.message ?: e.javaClass.simpleName, runCatching { credenciales.leer() }.getOrNull())
+            RegistroActividad.error("Error durante la sincronización", e)
+            return fallo(if (e is OutOfMemoryError) "Memoria insuficiente al procesar la lista" else msg)
+        } finally {
+            _progreso.value = null
         }
     }
 
@@ -251,6 +299,7 @@ class Repositorio(
                     LectorEpg.leer(p)
                 }
                 if (canales.isEmpty()) throw IOException("La guía no tiene canales")
+                RegistroActividad.info("Guía leída: ${canales.size} canales")
                 dao.reemplazarEpg(canales.map {
                     CanalEpgEntidad(it.id, it.posicion, json.encodeToString(ListSerializer(String.serializer()), it.nombres), it.icono)
                 })
@@ -259,6 +308,7 @@ class Repositorio(
                 return@withContext null
             } catch (e: Exception) {
                 ultimo = e
+                RegistroActividad.aviso("Guía: intento ${intento + 1} fallido: ${e.message ?: e.javaClass.simpleName}")
                 kotlinx.coroutines.delay(2000L shl intento)
             } finally { _progreso.value = null }
         }
@@ -279,8 +329,10 @@ class Repositorio(
         val streams = dao.streams().map { it.aDominio() }
         val decisiones = dao.decisiones().map { it.aDominio() }
         val tasas = dao.resultadosEnlaces().mapNotNull { r -> r.kbps?.let { r.streamId to it } }.toMap()
+        val t0 = System.currentTimeMillis()
         val r = Motor(config).procesar(streams, categorias, canalesEpg(), decisiones, tasas)
         _resultado.value = r
+        if (streams.isNotEmpty()) RegistroActividad.info("Lista calculada en ${System.currentTimeMillis() - t0} ms: ${r.cifras.entradasLista} canales, ${r.cifras.conGuia} con guía")
         val ultimo = dao.ultimoInforme()?.let { runCatching { json.decodeFromString(InformeCambios.serializer(), it.json) }.getOrNull() }
         _casos.value = BandejaRevision.casos(r, decisiones, ultimo)
     }

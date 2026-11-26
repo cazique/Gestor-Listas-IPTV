@@ -18,6 +18,7 @@
     <application
         android:name=".IptvGestorApp"
         android:allowBackup="false"
+        android:largeHeap="true"
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/reglas_extraccion"
         android:icon="@mipmap/ic_launcher"

@@ -56,7 +56,10 @@ fun PantallaCuenta() {
             val r = repo.probarConexion(c, permitirHttp)
             resultado = r
             when (r) {
-                is ResultadoConexion.Ok -> { repo.guardarCuenta(c, r.base); mensaje = "Cuenta guardada" }
+                is ResultadoConexion.Ok -> {
+                    mensaje = if (repo.guardarCuenta(c, r.base)) "Cuenta guardada. Ya puedes sincronizar desde Resumen."
+                    else "Conectado, pero el móvil no ha podido guardar la cuenta cifrada. Mira Ajustes → Registro de actividad."
+                }
                 is ResultadoConexion.NecesitaHttp -> pidiendoHttp = r.host
                 is ResultadoConexion.Error -> Unit
             }

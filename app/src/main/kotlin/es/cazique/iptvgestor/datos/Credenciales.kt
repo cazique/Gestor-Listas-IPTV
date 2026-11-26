@@ -56,6 +56,7 @@ class Credenciales(private val context: Context) {
         c.init(Cipher.DECRYPT_MODE, clave(), GCMParameterSpec(128, todo, 0, 12))
         String(c.doFinal(todo, 12, todo.size - 12), Charsets.UTF_8)
     } catch (e: Exception) {
+        es.cazique.iptvgestor.RegistroActividad.error("No se pudo descifrar un dato de la cuenta", e)
         null
     }
 
@@ -76,6 +77,9 @@ class Credenciales(private val context: Context) {
     }
 
     suspend fun borrar() { context.secretos.edit { it.clear() } }
+
+    /** Hay datos guardados (aunque quizá no se puedan descifrar). */
+    suspend fun hayDatos(): Boolean = context.secretos.data.first()[kHost] != null
 
     // Subida a un servidor propio (sección 7.4): también cifrada.
     private val kSubidaUrl = stringPreferencesKey("subida_url")

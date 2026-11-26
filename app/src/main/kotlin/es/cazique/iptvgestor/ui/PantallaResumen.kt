@@ -70,7 +70,7 @@ fun PantallaResumen() {
                 when {
                     progreso != null -> Etiqueta("En curso", MaterialTheme.colorScheme.secondary)
                     conError -> Etiqueta("Con error", MaterialTheme.colorScheme.error)
-                    ultima != null -> Etiqueta("Al día", MaterialTheme.colorScheme.tertiary)
+                    estado == "ok" && ultima != null -> Etiqueta("Al día", MaterialTheme.colorScheme.tertiary)
                     else -> Etiqueta("Sin sincronizar", MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Text("Última: ${fechaCorta(ultima)}", style = MaterialTheme.typography.bodySmall)
@@ -79,6 +79,7 @@ fun PantallaResumen() {
                 Text(estado.orEmpty().removePrefix("error: "), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 BotonSecundario("Ver registro de actividad") { nav.ir(Destino.Registro) }
             }
+            if (estado?.startsWith("cuenta nueva") == true) Text("Cuenta guardada: pulsa «Sincronizar ahora».", style = MaterialTheme.typography.bodySmall)
             Text("Guía de dobleM: ${fechaCorta(prefs?.get(Ajustes.K.ULTIMA_EPG))}", style = MaterialTheme.typography.bodySmall)
             progreso?.let { Text(it); LinearProgressIndicator(Modifier.fillMaxWidth().testTag("progreso")) }
             mensaje?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }
