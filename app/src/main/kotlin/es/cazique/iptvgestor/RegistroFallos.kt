@@ -33,6 +33,7 @@ object RegistroFallos {
         File(context.filesDir, ARCHIVO).writeText(redactado)
         // También al registro del sistema (ya redactado): la prueba en emulador de CI lo busca.
         Log.e(ETIQUETA, redactado)
+        runCatching { RegistroActividad.error("Fallo ($donde)", e) }
     }
 
     fun leerYBorrar(context: Context): String? {

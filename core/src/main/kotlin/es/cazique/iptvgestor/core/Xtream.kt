@@ -34,7 +34,8 @@ class ClienteXtream(
     }
 
     fun texto(accion: String?): String {
-        val req = Request.Builder().url(url(accion)).header("User-Agent", userAgent).build()
+        val u = url(accion)
+        val req = Request.Builder().url(u).header("User-Agent", userAgent).build()
         try {
             http.newCall(req).execute().use { r ->
                 if (!r.isSuccessful) throw ErrorProveedor("El servidor respondió ${r.code}", r.code)
@@ -43,7 +44,7 @@ class ClienteXtream(
         } catch (e: ErrorProveedor) {
             throw e
         } catch (e: IOException) {
-            throw ErrorProveedor(Redactor.redactar(describir(e), cuenta))
+            throw ErrorProveedor(Redactor.redactar(describir(e, u.host), cuenta))
         }
     }
 
@@ -66,8 +67,11 @@ class ClienteXtream(
     }
 
     companion object {
-        fun describir(e: Throwable): String = when (e) {
-            is UnknownHostException -> "No se encuentra el servidor"
+        /** Mensaje para el usuario; con el servidor (nunca credenciales) para poder diagnosticar. */
+        fun describir(e: Throwable, host: String? = null): String = describirBase(e) + (host?.let { " ($it)" } ?: "")
+
+        private fun describirBase(e: Throwable): String = when (e) {
+            is UnknownHostException -> "No se encuentra el servidor: revisa la dirección, la conexión o la VPN/DNS"
             is ConnectException -> "Conexión rechazada"
             is SocketTimeoutException -> "Tiempo de espera agotado"
             is SSLHandshakeException, is SSLPeerUnverifiedException -> "Error de certificado TLS"

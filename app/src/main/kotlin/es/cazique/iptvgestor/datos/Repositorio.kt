@@ -34,6 +34,7 @@ import es.cazique.iptvgestor.core.Subidor
 import es.cazique.iptvgestor.datos.bd.ResultadoEnlaceEntidad
 import kotlinx.coroutines.runBlocking
 import es.cazique.iptvgestor.datos.bd.BaseDatos
+import es.cazique.iptvgestor.RegistroActividad
 import es.cazique.iptvgestor.datos.bd.CanalEpgEntidad
 import es.cazique.iptvgestor.datos.bd.CategoriaEntidad
 import es.cazique.iptvgestor.datos.bd.DecisionEntidad
@@ -99,6 +100,7 @@ class Repositorio(
         val consentidos = ajustes.leer(Ajustes.K.HOSTS_HTTP_PERMITIDOS) ?: emptySet()
         val rapido = http.newBuilder().connectTimeout(10, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).build()
         val escrito = cuenta.host.trim()
+        RegistroActividad.info("Probar conexión con «$escrito» (HTTPS primero)")
         if (escrito.startsWith("https://", ignoreCase = true)) {
             return@withContext try {
                 ResultadoConexion.Ok(ClienteXtream(rapido, cuenta, ua).estado(), cuenta.base, true)
@@ -109,11 +111,13 @@ class Repositorio(
             val estado = ClienteXtream(rapido, cuenta.copy(host = urlHttps), ua).estado()
             return@withContext ResultadoConexion.Ok(estado, urlHttps, true)
         } catch (e: Exception) { e }
+        RegistroActividad.aviso("HTTPS no disponible en $urlHttps: ${errorHttps.message}")
         if (PoliticaHttps.clasificar(errorHttps) == ResultadoHttps.ERROR_CERTIFICADO) {
             return@withContext ResultadoConexion.Error("El servidor ofrece HTTPS pero su certificado no es válido. Por seguridad no se cambia a HTTP.")
         }
         if (!permitirHttp && hostClave !in consentidos) return@withContext ResultadoConexion.NecesitaHttp(hostClave)
         ajustes.guardar(Ajustes.K.HOSTS_HTTP_PERMITIDOS, consentidos + hostClave)
+        RegistroActividad.info("Se prueba HTTP en $urlHttp (permitido por el usuario)")
         try {
             val estado = ClienteXtream(rapido, cuenta.copy(host = urlHttp), ua).estado()
             // Si el servidor anuncia un puerto HTTPS, se vuelve a intentar HTTPS con él.
@@ -152,6 +156,7 @@ class Repositorio(
             try {
                 val cuenta = cuentaEfectiva() ?: return@withContext ResumenSincronizacion(null, "Falta configurar la cuenta")
                 val ua = ajustes.leer(Ajustes.K.USER_AGENT) ?: UA_PREDETERMINADO
+                RegistroActividad.info("Sincronización: servidor ${cuenta.base} · User-Agent $ua")
                 val cliente = ClienteXtream(http, cuenta, ua)
                 _progreso.value = "Descargando categorías…"
                 val categorias = cliente.categorias()
@@ -159,13 +164,16 @@ class Repositorio(
                 val streams = cliente.streams()
                 if (streams.isEmpty() || categorias.isEmpty()) throw IOException("El proveedor devolvió una lista vacía")
                 runCatching { if (epgAntigua()) actualizarEpgSinBloqueo() }
+                RegistroActividad.info("Recibidas ${categorias.size} categorías y ${streams.size} canales")
                 val informe = guardarProveedor(categorias, streams)
+                RegistroActividad.info("Sincronización correcta: ${informe.anadidos.size} añadidos, ${informe.quitados.size} quitados, ${informe.cambiados.size} cambiados")
                 ajustes.guardar(Ajustes.K.ULTIMA_SINCRONIZACION, System.currentTimeMillis())
                 ajustes.guardar(Ajustes.K.ESTADO_SINCRONIZACION, "ok")
                 ResumenSincronizacion(informe, null)
             } catch (e: Exception) {
                 val cuenta = credenciales.leer()
                 val msg = Redactor.redactar(e.message ?: e.javaClass.simpleName, cuenta)
+                RegistroActividad.error("Sincronización fallida: $msg")
                 ajustes.guardar(Ajustes.K.ESTADO_SINCRONIZACION, "error: $msg")
                 ResumenSincronizacion(null, msg)
             } finally {

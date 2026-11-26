@@ -43,11 +43,14 @@ class IptvGestorApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         RegistroFallos.instalar(this)
+        RegistroActividad.iniciar(this)
+        RegistroActividad.info("Inicio de la app ${runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull()} · Android ${android.os.Build.VERSION.RELEASE} · ${android.os.Build.MODEL}")
         ajustes = Ajustes(this)
         // Sin interceptor de registro: nunca se escriben URL ni cuerpos en el log (sección 9).
         http = OkHttpClient.Builder()
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(120, TimeUnit.SECONDS)
+            .addInterceptor(RegistroActividad.Interceptor())
             .build()
         actualizaciones = GestorActualizaciones(this, http, ajustes)
         repositorio = Repositorio(this, http, ajustes, Credenciales(this), BaseDatos.crear(this))

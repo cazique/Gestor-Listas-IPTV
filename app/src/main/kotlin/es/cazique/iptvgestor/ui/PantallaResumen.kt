@@ -75,7 +75,10 @@ fun PantallaResumen() {
                 }
                 Text("Última: ${fechaCorta(ultima)}", style = MaterialTheme.typography.bodySmall)
             }
-            if (conError) Text(estado.orEmpty().removePrefix("error: "), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            if (conError) {
+                Text(estado.orEmpty().removePrefix("error: "), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                BotonSecundario("Ver registro de actividad") { nav.ir(Destino.Registro) }
+            }
             Text("Guía de dobleM: ${fechaCorta(prefs?.get(Ajustes.K.ULTIMA_EPG))}", style = MaterialTheme.typography.bodySmall)
             progreso?.let { Text(it); LinearProgressIndicator(Modifier.fillMaxWidth().testTag("progreso")) }
             mensaje?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }

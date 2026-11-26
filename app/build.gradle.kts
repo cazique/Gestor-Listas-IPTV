@@ -61,8 +61,12 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
         unitTests.all {
+            // Capturas con Robolectric: renderizado real de Compose.
+            it.systemProperty("robolectric.pixelCopyRenderMode", "hardware")
+            it.maxHeapSize = "3g"
             it.testLogging {
                 events("failed")
+                showStandardStreams = false
                 exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
             }
         }
